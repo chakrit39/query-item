@@ -30,17 +30,21 @@ with col2:
 ----------------------------------------------------
 ตัวกรอง
 """
-List_type = ['ทั้งหมด']
-for i in df.ประเภท.unique(): List_type.append(i)
-Select_type = st.selectbox("ประเภท", List_type, key='List_type')
-
-List_name = ['ทั้งหมด']
-for i in df.รายการ.unique(): List_name.append(i)
-Select_name = st.selectbox("รายการ", List_name, key='List_name')
-
-List_status = ['ทั้งหมด']
-for i in df.สภาพครุภัณฑ์.unique(): List_status.append(i)
-Select_status = st.selectbox("สภาพครุภัณฑ์", List_status, key='List_status')
+col5, col6 = st.columns(2)
+with col5:
+    List_type = ['ทั้งหมด']
+    for i in df.ประเภท.unique(): List_type.append(i)
+    Select_type = st.selectbox("ประเภท", List_type, key='List_type')
+    
+with col6:
+    List_name = ['ทั้งหมด']
+    for i in df.รายการ.unique(): List_name.append(i)
+    Select_name = st.selectbox("รายการ", List_name, key='List_name')
+    
+    List_status = ['ทั้งหมด']
+    for i in df.สภาพครุภัณฑ์.unique(): List_status.append(i)
+    Select_status = st.selectbox("สภาพครุภัณฑ์", List_status, key='List_status')
+    
 """
 ----------------------------------------------------
 """ 
