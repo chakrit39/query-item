@@ -15,7 +15,7 @@ st.title('บัญชีการตรวจสอบครุภัณฑ์ 
 ###### ส่วนปรับปรุงระวางแผนที่   กองเทคโนโลยีทำแผนที่
 ----------------------------------------------------
 """
-
+df.สถานที่.unique()
 
 df = get_UN_data()
 iCount = len(df)
@@ -36,9 +36,9 @@ with col5:
     for i in df.ประเภท.unique(): List_type.append(i)
     Select_type = st.selectbox("ประเภท", List_type, key='List_type')
     
-List_place = ['ทั้งหมด']
-for i in df['สถานที่'].unique(): List_place.append(i)
-Select_place = st.selectbox("สถานที่", List_place, key='List_place')
+    List_place = ['ทั้งหมด']
+    for i in df.สถานที่.unique(): List_place.append(i)
+    Select_place = st.selectbox("สถานที่", List_place, key='List_place')
     
 with col6:
     List_name = ['ทั้งหมด']
