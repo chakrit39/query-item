@@ -19,7 +19,7 @@ st.title('บัญชีการตรวจสอบครุภัณฑ์ 
 
 df = get_UN_data()
 iCount = len(df)
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([0.4, 0.6])
 with col1:
     Select_fil = st.selectbox('รายการสืบค้น',['รายการ', 'หมายเลขครุภัณฑ์', 'หมายเลขสินทรัพย์ตามระบบ GFMIS'])
 
@@ -44,7 +44,7 @@ Select_status = st.selectbox("สภาพครุภัณฑ์", List_status
 """
 ----------------------------------------------------
 """ 
-col3, col4 = st.columns([0.8, 0.2])
+col3, col4 = st.columns([0.9, 0.1])
 def onclick():
     st.session_state.fil = ''
     st.session_state.List_type = 'ทั้งหมด'
