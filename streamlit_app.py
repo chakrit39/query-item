@@ -19,9 +19,12 @@ st.title('บัญชีการตรวจสอบครุภัณฑ์ 
 
 df = get_UN_data()
 iCount = len(df)
+col1, col2 = st.columns(2)
+with col1:
+    Select_fil = st.selectbox('รายการสืบค้น',['รายการ', 'หมายเลขครุภัณฑ์', 'หมายเลขสินทรัพย์ตามระบบ GFMIS'])
 
-Select_fil = st.selectbox('รายการสืบค้น',['รายการ', 'หมายเลขครุภัณฑ์', 'หมายเลขสินทรัพย์ตามระบบ GFMIS'])
-fil = st.text_input('คำค้นหา', key='fil')
+with col2:
+    fil = st.text_input('คำค้นหา', key='fil')
 
 """
 ----------------------------------------------------
