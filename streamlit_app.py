@@ -33,19 +33,19 @@ col5, col6 = st.columns(2)
 with col5:
     List_type = ['ทั้งหมด']
     for i in df.ประเภท.unique(): List_type.append(i)
-    Select_type = st.selectbox("ประเภท", List_type, key='List_type', disabled=True)
+    Select_type = st.selectbox("ประเภท", List_type, key='List_type', disabled=False)
     List_place = ['ทั้งหมด']
     for i in df.สถานที่.unique(): List_place.append(i)
-    Select_place = st.selectbox("สถานที่", List_place, key='List_place', disabled=True)
+    Select_place = st.selectbox("สถานที่", List_place, key='List_place', disabled=False)
     
 with col6:
     List_name = ['ทั้งหมด']
     for i in df.รายการ.unique(): List_name.append(i)
-    Select_name = st.selectbox("รายการ", List_name, key='List_name', disabled=True)
+    Select_name = st.selectbox("รายการ", List_name, key='List_name', disabled=False)
     
     List_status = ['ทั้งหมด']
     for i in df.สภาพครุภัณฑ์.unique(): List_status.append(i)
-    Select_status = st.selectbox("สภาพครุภัณฑ์", List_status, key='List_status', disabled=True)
+    Select_status = st.selectbox("สภาพครุภัณฑ์", List_status, key='List_status', disabled=False)
     
 """
 ----------------------------------------------------
