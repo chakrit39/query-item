@@ -74,7 +74,7 @@ else:
     if Select_type != 'ทั้งหมด': data = data[data.ประเภท==Select_type]
     if Select_name != 'ทั้งหมด': data = data[data.รายการ==Select_name]
     if Select_status != 'ทั้งหมด': data = data[data.สภาพครุภัณฑ์==Select_status]
-    if Select_status != 'ทั้งหมด': data = data[data.สถานที่==Select_place]  
+    if Select_place != 'ทั้งหมด': data = data[data.สถานที่==Select_place]  
     data = data.reset_index(drop=True)
     data.index = np.arange(1, len(data) + 1)
     data.index.name = 'ลำดับ'
