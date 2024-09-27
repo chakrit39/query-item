@@ -50,7 +50,7 @@ with col6:
 """
 ----------------------------------------------------
 """ 
-col3, col4 = st.columns([0.80, 0.20])
+col3, col4 = st.columns([0.75, 0.25])
 def onclick():
     st.session_state.fil = ''
     st.session_state.List_type = 'ทั้งหมด'
