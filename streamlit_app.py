@@ -44,19 +44,20 @@ Select_status = st.selectbox("สภาพครุภัณฑ์", List_status
 """
 ----------------------------------------------------
 """ 
+col3, col4 = st.columns(2)
 def onclick():
     st.session_state.fil = ''
     st.session_state.List_type = 'ทั้งหมด'
     st.session_state.List_name = 'ทั้งหมด'
     st.session_state.List_status = 'ทั้งหมด'
-col2.button('Reset', type="primary", on_click=onclick)
+col4.button('Reset', type="primary", on_click=onclick)
 
 if not Select_name and Select_status and fil and Select_type:
-    with col1:
+    with col3:
         "#### บัญชีครุภัณฑ์        | "+str(iCount)+" รายการ"
     st.dataframe(data=df,use_container_width=True)
 elif Select_name == 'ทั้งหมด' and Select_status == 'ทั้งหมด' and fil == '' and Select_type == 'ทั้งหมด':
-    with col1:
+    with col3:
         "#### บัญชีครุภัณฑ์        | "+str(iCount)+" รายการ"
     st.dataframe(data=df,use_container_width=True)
 else:
@@ -67,6 +68,6 @@ else:
     data = data.reset_index(drop=True)
     data.index = np.arange(1, len(data) + 1)
     data.index.name = 'ลำดับ'
-    with col1:
+    with col3:
         "#### บัญชีครุภัณฑ์        | " + str(len(data)) + " จาก " + str(iCount) + " รายการ"
     st.dataframe(data=data,use_container_width=True)
