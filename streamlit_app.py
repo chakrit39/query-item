@@ -49,13 +49,15 @@ def onclick():
     st.session_state.List_type = 'ทั้งหมด'
     st.session_state.List_name = 'ทั้งหมด'
     st.session_state.List_status = 'ทั้งหมด'
-st.button('Reset', type="primary", on_click=onclick)
+col2.button('Reset', type="primary", on_click=onclick)
 
 if not Select_name and Select_status and fil and Select_type:
-    "#### บัญชีครุภัณฑ์        | "+str(iCount)+" รายการ"
+    with col1:
+        "#### บัญชีครุภัณฑ์        | "+str(iCount)+" รายการ"
     st.dataframe(data=df,use_container_width=True)
 elif Select_name == 'ทั้งหมด' and Select_status == 'ทั้งหมด' and fil == '' and Select_type == 'ทั้งหมด':
-    "#### บัญชีครุภัณฑ์        | "+str(iCount)+" รายการ"
+    with col1:
+        "#### บัญชีครุภัณฑ์        | "+str(iCount)+" รายการ"
     st.dataframe(data=df,use_container_width=True)
 else:
     data = df[df[Select_fil].str.contains(str(fil))]
@@ -65,6 +67,6 @@ else:
     data = data.reset_index(drop=True)
     data.index = np.arange(1, len(data) + 1)
     data.index.name = 'ลำดับ'
-    
-    "#### บัญชีครุภัณฑ์        | " + str(len(data)) + " จาก " + str(iCount) + " รายการ"
+    with col1:
+        "#### บัญชีครุภัณฑ์        | " + str(len(data)) + " จาก " + str(iCount) + " รายการ"
     st.dataframe(data=data,use_container_width=True)
