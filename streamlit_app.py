@@ -24,7 +24,7 @@ with col1:
 
 with col2:
     fil = st.text_input('คำค้นหา', key='fil')
-st.dataframe(data=df,use_container_width=True)
+    
 """
 ----------------------------------------------------
 ตัวกรอง
