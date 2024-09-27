@@ -5,7 +5,7 @@ import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
-
+@st.cache_data
 def get_UN_data():
     df = pd.read_csv('./data.csv',header=0)
     return df.set_index("ลำดับ")
