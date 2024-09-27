@@ -35,6 +35,10 @@ with col5:
     List_type = ['ทั้งหมด']
     for i in df.ประเภท.unique(): List_type.append(i)
     Select_type = st.selectbox("ประเภท", List_type, key='List_type')
+
+    List_place = ['ทั้งหมด']
+    for i in df.ประเภท.unique(): List_place.append(i)
+    Select_place = st.selectbox("สถานที่", List_place, key='List_place')
     
 with col6:
     List_name = ['ทั้งหมด']
@@ -54,13 +58,14 @@ def onclick():
     st.session_state.List_type = 'ทั้งหมด'
     st.session_state.List_name = 'ทั้งหมด'
     st.session_state.List_status = 'ทั้งหมด'
+    st.session_state.List_place = 'ทั้งหมด'
 col4.button('Reset', type="primary", on_click=onclick)
 
-if not Select_name and Select_status and fil and Select_type:
+if not Select_name and Select_status and fil and Select_type and Select_place:
     with col3:
         "#### บัญชีครุภัณฑ์        | "+str(iCount)+" รายการ"
     st.dataframe(data=df,use_container_width=True)
-elif Select_name == 'ทั้งหมด' and Select_status == 'ทั้งหมด' and fil == '' and Select_type == 'ทั้งหมด':
+elif Select_name == 'ทั้งหมด' and Select_status == 'ทั้งหมด' and fil == '' and Select_type == 'ทั้งหมด' and Select_place == 'ทั้งหมด':
     with col3:
         "#### บัญชีครุภัณฑ์        | "+str(iCount)+" รายการ"
     st.dataframe(data=df,use_container_width=True)
@@ -69,6 +74,7 @@ else:
     if Select_type != 'ทั้งหมด': data = data[data.ประเภท==Select_type]
     if Select_name != 'ทั้งหมด': data = data[data.รายการ==Select_name]
     if Select_status != 'ทั้งหมด': data = data[data.สภาพครุภัณฑ์==Select_status]
+    if Select_status != 'ทั้งหมด': data = data[data.ประเภท==Select_status]  
     data = data.reset_index(drop=True)
     data.index = np.arange(1, len(data) + 1)
     data.index.name = 'ลำดับ'
