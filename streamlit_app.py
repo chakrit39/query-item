@@ -44,7 +44,7 @@ Select_status = st.selectbox("สภาพครุภัณฑ์", List_status
 """
 ----------------------------------------------------
 """ 
-col3, col4 = st.columns([0.9, 0.1])
+col3, col4 = st.columns([0.85, 0.15])
 def onclick():
     st.session_state.fil = ''
     st.session_state.List_type = 'ทั้งหมด'
