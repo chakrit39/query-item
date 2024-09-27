@@ -44,13 +44,13 @@ Select_status = st.selectbox("สภาพครุภัณฑ์", List_status
 """
 ----------------------------------------------------
 """ 
-col3, col4 ,col5 = st.columns(3)
+col3, col4 = st.columns([0.7, 0.3])
 def onclick():
     st.session_state.fil = ''
     st.session_state.List_type = 'ทั้งหมด'
     st.session_state.List_name = 'ทั้งหมด'
     st.session_state.List_status = 'ทั้งหมด'
-col5.button('Reset', type="primary", on_click=onclick)
+col4.button('Reset', type="primary", on_click=onclick)
 
 if not Select_name and Select_status and fil and Select_type:
     with col3:
