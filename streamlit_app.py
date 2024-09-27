@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 @st.cache_data
 def get_UN_data():
-    df = pd.read_csv('./Data.csv',header=0)
+    df = pd.read_csv('./data.csv',header=0)
     return df.set_index("ลำดับ")
 st.title('บัญชีการตรวจสอบครุภัณฑ์ ')
 """
