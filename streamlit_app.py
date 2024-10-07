@@ -34,6 +34,7 @@ with col5:
     for i in df.ประเภท.unique(): List_type.append(i)
     List_type[1:-0].sort()
     Select_type = st.selectbox("ประเภท", List_type  , key='List_type')
+    
     List_place = ['ทั้งหมด']
     for i in df.สถานที่.unique(): List_place.append(i)
     List_place[1:-0].sort()
