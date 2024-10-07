@@ -55,7 +55,6 @@ with col6:
     List_ = []
     for i in df.สภาพครุภัณฑ์.unique(): List_.append(i)
     List_.sort()    
-    List_status.sort()
     List_status = ['ทั้งหมด']
     List_status.extend(List_)
     Select_status = st.selectbox("สภาพครุภัณฑ์", List_status , key='List_status')
