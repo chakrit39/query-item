@@ -32,23 +32,23 @@ col5, col6 = st.columns(2)
 with col5:
     List_type = ['ทั้งหมด']
     for i in df.ประเภท.unique(): List_type.append(i)
-    List_type[1:-0].sort()
+    List_type.sort()
     Select_type = st.selectbox("ประเภท", List_type  , key='List_type')
     
     List_place = ['ทั้งหมด']
     for i in df.สถานที่.unique(): List_place.append(i)
-    List_place[1:-0].sort()
+    List_place.sort()
     Select_place = st.selectbox("สถานที่", List_place , key='List_place')
     
 with col6:
     List_name = ['ทั้งหมด']
     for i in df.รายการ.unique(): List_name.append(i)
-    List_name[1:-0].sort()
+    List_name.sort()
     Select_name = st.selectbox("รายการ", List_name , key='List_name')
     
     List_status = ['ทั้งหมด']
     for i in df.สภาพครุภัณฑ์.unique(): List_status.append(i)
-    List_status[1:-0].sort()
+    List_status.sort()
     Select_status = st.selectbox("สภาพครุภัณฑ์", List_status , key='List_status')
     
 """
