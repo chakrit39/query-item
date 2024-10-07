@@ -36,7 +36,7 @@ with col5:
     Select_type = st.selectbox("ประเภท", List_type  , key='List_type')
     List_place = ['ทั้งหมด']
     for i in df.สถานที่.unique(): List_place.append(i)
-    List_place[1:-0].sort(
+    List_place[1:-0].sort()
     Select_place = st.selectbox("สถานที่", List_place , key='List_place')
     
 with col6:
