@@ -241,6 +241,17 @@ right_col_ .dataframe(df_TYP, use_container_width=True, hide_index=True,
                     height=dynamic_height
                    )
 
+df_IMG = df.groupby('QUA_PIC').size().reset_index(name='จำนวน')
+df_IMG = df_IMG.sort_values(by='จำนวน', ascending=False)
+df_IMG = df_IMG[df_TYP['QUA_PIC']!="                                                                                                                                                                                                      "]
+dynamic_height = 35 * (len(df_IMG) + 1)
+right_col_ .dataframe(df_IMG, use_container_width=True, hide_index=True,
+                    column_config={
+                                    "จำนวน": st.column_config.NumberColumn("มอบหมาย", format="%,d ", alignment="center"),
+                                    },
+                    height=dynamic_height
+                   )
+
 df_BUILD = df.groupby('BUILD_FROM').size().reset_index(name='จำนวน')
 df_BUILD = df_BUILD.sort_values(by='จำนวน', ascending=False)
 df_BUILD = df_BUILD[df_BUILD['BUILD_FROM']!="                                                                                                                                                                                                      "]
