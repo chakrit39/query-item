@@ -134,7 +134,7 @@ fig.update_layout(
         type='date',
         tickformat="%d %b", # แสดงเป็น "17 Apr"
         dtick=86400000.0,    # บังคับแสดงทุกวัน (1 วัน = 86,400,000 ms)
-        tickangle=90    # เอียงตัวอักษรเพื่อให้ไม่ซ้อนกัน
+        tickangle=-90    # เอียงตัวอักษรเพื่อให้ไม่ซ้อนกัน
     ),
     yaxis=dict(
         title="จำนวนงาน",
