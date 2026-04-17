@@ -81,8 +81,8 @@ def display_styled_dataframe(df_display, title):
                 max_value=100,
             ),
             # จัดรูปแบบตัวเลขคอลัมน์อื่นๆ ให้ดูง่าย
-            "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%d รายการ"),
-            "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%d รายการ"),
+            "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%d "),
+            "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%d "),
         },
         use_container_width=True,
         hide_index=True,
