@@ -92,7 +92,7 @@ def display_styled_dataframe(df_display, title):
     )
     
 # --- 3. การวาง Layout ---
-st.title("🚀 Dashboard ติดตามงานขึ้นรูปแปลง")
+st.title("🚀 Dashboard ติดตามผลงานขึ้นรูปแปลง")
 
 # สร้าง Dropdown กรองชื่อคน (Global หรือแยกฝั่ง)
 all_names = ["แสดงทุกคน"] + sorted(df['NAME'].dropna().astype(str).unique().tolist())
