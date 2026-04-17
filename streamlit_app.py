@@ -229,5 +229,6 @@ with right_col:
 st.divider()
     #total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
     #finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
-df_ = df.groupby('SURV_TYP').size()#.reset_index(name='มอบหมาย')
+df_ = df.groupby('SURV_TYP').size().reset_index(name='จำนวน')
+df_ = df_[df_['SURV_TYP']!=""]
 st.dataframe(df_, use_container_width=True)
