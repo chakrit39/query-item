@@ -110,6 +110,7 @@ with left_col:
     # ตารางรายคน (ส่ง show_total เข้าไป)
     #st.subheader("👨‍💼 สรุปรายบุคคล")
     res_name_l = summary_with_metrics(display_df_l, 'NAME', show_total=show_total_l)
+    res_name_l["มอหมาย"] = 130
     display_styled_dataframe(res_name_l, "👨‍💼 สรุปรายบุคคล")
     
     # Progress Bar ภาพรวมฝั่งซ้าย
