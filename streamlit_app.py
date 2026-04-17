@@ -97,7 +97,7 @@ st.title("🚀 Dashboard ติดตามงาน พร้อมระบบ
 st.subheader("📈 แนวโน้มผลงานย้อนหลัง 30 วัน")
 
 # 1. เตรียมข้อมูล (30 วันล่าสุด)
-last_30_days = [today - pd.Timedelta(days=i) for i in range(30)]
+last_30_days = [today - pd.Timedelta(days=i) for i in range(90)]
 df_last_30 = df[df['DATE_SUBMIT'].isin(last_30_days)]
 trend_data_30 = (
     df_last_30.groupby('DATE_SUBMIT')
