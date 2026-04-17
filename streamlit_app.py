@@ -61,7 +61,34 @@ def summary_with_metrics(input_df, group_col, show_total=True):
         return pd.concat([summary, total_row], ignore_index=True)
     
     return summary
-
+    
+def display_styled_dataframe(df_display, title):
+    st.subheader(title)
+    
+    # คำนวณความสูงให้พอดีกับจำนวนแถว
+    dynamic_height = 35 * (len(df_display) + 1)
+    # จำกัดความสูงไม่ให้เกิน 500px เพื่อความสวยงามถ้าข้อมูลเยอะ
+    container_height = min(dynamic_height, 500) 
+    
+    st.dataframe(
+        df_display,
+        column_config={
+            "ความคืบหน้า (%)": st.column_config.ProgressColumn(
+                "ความคืบหน้า (%)",
+                help="เปอร์เซ็นต์งานที่ดำเนินการแล้วเทียบกับงานที่ได้รับมอบหมาย",
+                format="%.2f%%",
+                min_value=0,
+                max_value=100,
+            ),
+            # จัดรูปแบบตัวเลขคอลัมน์อื่นๆ ให้ดูง่าย
+            "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%d รายการ"),
+            "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%d รายการ"),
+        },
+        use_container_width=True,
+        hide_index=True,
+        height=container_height
+    )
+    
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามงาน พร้อมระบบกรองรายบุคคล")
 
@@ -81,9 +108,9 @@ with left_col:
     show_total_l = True if selected_name_l == "แสดงทุกคน" else False
     
     # ตารางรายคน (ส่ง show_total เข้าไป)
-    st.subheader("👨‍💼 สรุปรายบุคคล")
+    #st.subheader("👨‍💼 สรุปรายบุคคล")
     res_name_l = summary_with_metrics(display_df_l, 'NAME', show_total=show_total_l)
-    st.dataframe(res_name_l, use_container_width=True, hide_index=True)
+    display_styled_dataframe(res_name_l, "👨‍💼 สรุปรายบุคคล")
     
     # Progress Bar ภาพรวมฝั่งซ้าย
     total_pct_l = res_name_l.iloc[-1]['ความคืบหน้า (%)']
@@ -91,9 +118,9 @@ with left_col:
     st.progress(total_pct_l / 100)
 
     # ตารางรายแผ่นงาน
-    st.subheader("📂 สรุปตามแผ่นงาน")
+    #st.subheader("📂 สรุปตามแผ่นงาน")
     res_sheet_l = summary_with_metrics(display_df_l, 'sheet_name')
-    st.dataframe(res_sheet_l, use_container_width=True, hide_index=True)
+    display_styled_dataframe(res_sheet_l, "📂 สรุปตามแผ่นงาน")
 
 # --- [ฝั่งขวา: เฉพาะวันนี้] ---
 with right_col:
@@ -110,9 +137,9 @@ with right_col:
         show_total_r = True if selected_name_r == "แสดงทุกคน" else False
         
         # ตารางรายคน (วันนี้)
-        st.subheader("👨‍💼 สรุปรายบุคคล (วันนี้)")
+        #st.subheader("👨‍💼 สรุปรายบุคคล (วันนี้)")
         res_name_r = summary_with_metrics(display_df_r, 'NAME', show_total=show_total_r)
-        st.dataframe(res_name_r, use_container_width=True, hide_index=True)
+        display_styled_dataframe(res_name_r, "👨‍💼 สรุปรายบุคคล (วันนี้)")
         
         # Progress Bar ภาพรวมฝั่งขวา
         total_pct_r = res_name_r.iloc[-1]['ความคืบหน้า (%)']
@@ -120,6 +147,6 @@ with right_col:
         st.progress(total_pct_r / 100)
 
         # ตารางรายแผ่นงาน (วันนี้)
-        st.subheader("📂 สรุปตามแผ่นงาน (วันนี้)")
+        #st.subheader("📂 สรุปตามแผ่นงาน (วันนี้)")
         res_sheet_r = summary_with_metrics(display_df_r, 'sheet_name')
-        st.dataframe(res_sheet_r, use_container_width=True, hide_index=True)
+        display_styled_dataframe(res_sheet_r, "📂 สรุปตามแผ่นงาน (วันนี้)")
