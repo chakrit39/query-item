@@ -197,7 +197,7 @@ with right_col:
     
     selected_name_r = st.selectbox("🔍 ค้นหาชื่อคน (ฝั่งขวา):", all_names, key="right_search")
     
-    df_today = df[df['DATE_SUBMIT'] == today]
+    df_today = df[df['DATE_SUBMIT'] == selected_date]
     display_df_r = df_today if selected_name_r == "แสดงทุกคน" else df_today[df_today['NAME'] == selected_name_r]
     
     if display_df_r.empty:
@@ -209,7 +209,7 @@ with right_col:
         # ตารางรายคน (วันนี้)
         #st.subheader("👨‍💼 สรุปรายบุคคล (วันนี้)")
         res_name_r = summary_with_metrics(display_df_r, 'NAME', show_total=show_total_r, daily=True)
-        display_styled_dataframe(res_name_r, "👨‍💼 สรุปรายบุคคล (วันนี้)")
+        display_styled_dataframe(res_name_r, f"👨‍💼 สรุปรายบุคคล {selected_date}")
         
         # Progress Bar ภาพรวมฝั่งขวา
         total_pct_r = res_name_r.iloc[-1]['ความคืบหน้า (%)']
@@ -221,4 +221,4 @@ with right_col:
         # ตารางรายแผ่นงาน (วันนี้)
         #st.subheader("📂 สรุปตามแผ่นงาน (วันนี้)")
         res_sheet_r = summary_with_metrics(display_df_r, 'sheet_name')
-        display_styled_dataframe(res_sheet_r, "📂 สรุปตามแผ่นงาน (วันนี้)")
+        display_styled_dataframe(res_sheet_r, f"📂 สรุปตามแผ่นงาน {selected_date}")
