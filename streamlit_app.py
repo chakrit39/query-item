@@ -138,8 +138,9 @@ with right_col:
         
         # ตารางรายคน (วันนี้)
         #st.subheader("👨‍💼 สรุปรายบุคคล (วันนี้)")
-        res_name_r = summary_with_metrics(display_df_r, 'NAME', show_total=show_total_r)
-        res_name_r["มอบหมาย"] = 130
+        display_df_r_ = display_df_r
+        display_df_r_["มอบหมาย"] = 130
+        res_name_r = summary_with_metrics(display_df_r_, 'NAME', show_total=show_total_r)
         display_styled_dataframe(res_name_r, "👨‍💼 สรุปรายบุคคล (วันนี้)")
         
         # Progress Bar ภาพรวมฝั่งขวา
