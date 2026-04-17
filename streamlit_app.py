@@ -111,20 +111,20 @@ trend_data_30 = (
     df_last_30.groupby('DATE_SUBMIT')
     .size()
     .reindex(last_30_days, fill_value=0)
-    .reset_index(name='จำนวนงาน')
+    .reset_index(name='ยอดงาน')
     .sort_values('DATE_SUBMIT')
 )
 
 # 2. คำนวณหาค่าสูงสุด และเพิ่ม Buffer 20%
-max_val = trend_data_30['จำนวนงาน'].max()
+max_val = trend_data_30['ยอดงาน'].max()
 y_upper_limit = max_val * 1.30 if max_val > 0 else 1000 # ถ้าค่าสูงสุดเป็น 0 ให้กันไว้ที่ 10
 
 # 3. สร้างกราฟ
 fig = px.line(
     trend_data_30, 
     x='DATE_SUBMIT', 
-    y='จำนวนงาน',
-    text='จำนวนงาน',
+    y='ยอดงาน',
+    text='ยอดงาน',
     markers=True
 )
 
@@ -145,7 +145,7 @@ fig.update_layout(
         tickangle=-90    # เอียงตัวอักษรเพื่อให้ไม่ซ้อนกัน
     ),
     yaxis=dict(
-        title="จำนวนงาน",
+        title="ยอดงาน",
         range=[0, y_upper_limit] # ตั้งค่าขอบเขตแกน Y ให้สูงกว่าค่า max 20%
     ),
     hovermode="x unified",
