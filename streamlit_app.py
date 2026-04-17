@@ -19,7 +19,7 @@ def get_full_data():
     ]
     info = st.secrets["gcp_service_account"]
     credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
-    client = bigquery.Client(credentials=credentials, project=info["dol-workspace"])
+    client = bigquery.Client(credentials=credentials, project="dol-workspace")
     query = "SELECT * FROM `dol-workspace.Dashboard_Work69.v_master_report`"
     return client.query(query).to_dataframe()
 
