@@ -7,7 +7,7 @@ import plotly.express as px
 # --- 1. ตั้งค่าการเชื่อมต่อและ Scopes ---
 st.set_page_config(layout="wide", page_title="Performance Dashboard")
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=900)
 def get_full_data():
     # ดึงข้อมูลจาก Secrets (Streamlit Cloud)
     info = st.secrets["gcp_service_account"]
@@ -191,7 +191,10 @@ with left_col:
 
 # --- [ฝั่งขวา: เฉพาะวันนี้] ---
 with right_col:
-    st.header(f"📅 ผลงานเฉพาะวันนี้ ({today})")
+    r1, r2, r3 = st.columns([0.3, 0.3, 0.4])
+    r1.header(f"📅 ผลงานตามวันที่")
+    selected_date = r2.date_input("📆 เลือกวันที่ต้องการดู:", today, key="date_selector")
+    
     selected_name_r = st.selectbox("🔍 ค้นหาชื่อคน (ฝั่งขวา):", all_names, key="right_search")
     
     df_today = df[df['DATE_SUBMIT'] == today]
