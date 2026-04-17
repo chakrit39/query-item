@@ -22,6 +22,7 @@ def get_full_data():
     query = "SELECT * FROM `dol-workspace.Dashboard_Work69.v_master_report`"
     df = client.query(query).to_dataframe()
     df['NAME'] = df['NAME'].fillna("ไม่ระบุชื่อ").astype(str) # เติมชื่อแทนค่าว่าง
+    df = df[df['NAME']!="ไม่ระบุชื่อ"]
     df['sheet_name'] = df['sheet_name'].fillna("ไม่ระบุชีต").astype(str)
     return df
 
