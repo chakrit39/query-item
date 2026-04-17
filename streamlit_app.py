@@ -12,9 +12,14 @@ st.set_page_config(layout="wide")
 
 @st.cache_data(ttl=600)  # Cache ข้อมูล 10 นาที
 def get_full_data():
+    SCOPES = [
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/bigquery",
+    "https://www.googleapis.com/auth/cloud-platform"
+    ]
     info = st.secrets["gcp_service_account"]
-    credentials = service_account.Credentials.from_service_account_info(info)
-    client = bigquery.Client(credentials=credentials, project=info["project_id"])
+    credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
+    client = bigquery.Client(credentials=credentials, project=info["dol-workspace"])
     query = "SELECT * FROM `dol-workspace.Dashboard_Work69.v_master_report`"
     return client.query(query).to_dataframe()
 
