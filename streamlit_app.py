@@ -20,7 +20,10 @@ def get_full_data():
     client = bigquery.Client(credentials=credentials, project="dol-workspace")
     
     query = "SELECT * FROM `dol-workspace.Dashboard_Work69.v_master_report`"
-    return client.query(query).to_dataframe()
+    df = client.query(query).to_dataframe()
+    df['NAME'] = df['NAME'].fillna("ไม่ระบุชื่อ").astype(str) # เติมชื่อแทนค่าว่าง
+    df['sheet_name'] = df['sheet_name'].fillna("ไม่ระบุชีต").astype(str)
+    return df
 
 # โหลดข้อมูล
 try:
@@ -58,7 +61,7 @@ def summary_with_metrics(input_df, group_col):
 st.title("🚀 Dashboard ติดตามงาน พร้อมระบบกรองรายบุคคล")
 
 # สร้าง Dropdown กรองชื่อคน (Global หรือแยกฝั่ง)
-all_names = ["แสดงทุกคน"] + sorted(df['NAME'].unique().tolist())
+all_names = ["แสดงทุกคน"] + sorted(df['NAME'].dropna().astype(str).unique().tolist())
 
 left_col, right_col = st.columns([1, 1])
 
