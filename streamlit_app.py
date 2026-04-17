@@ -92,7 +92,7 @@ def display_styled_dataframe(df_display, title):
     )
     
 # --- 3. การวาง Layout ---
-st.title("🚀 Dashboard ติดตามงาน พร้อมระบบกรองรายบุคคล")
+st.title("🚀 Dashboard ติดตามงานขึ้นรูปแปลง")
 
 # สร้าง Dropdown กรองชื่อคน (Global หรือแยกฝั่ง)
 all_names = ["แสดงทุกคน"] + sorted(df['NAME'].dropna().astype(str).unique().tolist())
@@ -212,7 +212,7 @@ with right_col:
         # ตารางรายคน (วันนี้)
         #st.subheader("👨‍💼 สรุปรายบุคคล (วันนี้)")
         res_name_r = summary_with_metrics(display_df_r, 'NAME', show_total=show_total_r, daily=True)
-        display_styled_dataframe(res_name_r, f"👨‍💼 สรุปรายบุคคล {selected_date}")
+        display_styled_dataframe(res_name_r, f"👨‍💼 สรุปรายบุคคลวันที่ {selected_date}")
         
         # Progress Bar ภาพรวมฝั่งขวา
         total_pct_r = res_name_r.iloc[-1]['ความคืบหน้า (%)']
@@ -224,4 +224,4 @@ with right_col:
         # ตารางรายแผ่นงาน (วันนี้)
         #st.subheader("📂 สรุปตามแผ่นงาน (วันนี้)")
         res_sheet_r = summary_with_metrics(display_df_r, 'sheet_name')
-        display_styled_dataframe(res_sheet_r, f"📂 สรุปตามแผ่นงาน {selected_date}")
+        display_styled_dataframe(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
