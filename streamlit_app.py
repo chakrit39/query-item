@@ -1,93 +1,84 @@
-import datetime
-import random
-import altair as alt
-import numpy as np
-import pandas as pd
 import streamlit as st
-@st.cache_data
-def get_UN_data():
-    df = pd.read_csv('./data.csv',header=0)
-    return df.set_index("ลำดับ")
-st.title('บัญชีการตรวจสอบครุภัณฑ์ ')
-"""
-###### งวดตั้งแต่วันที่  ๑  ตุลาคม  ๒๕๖๖  ถึงวันที่  ๓๐  กันยายน  ๒๕๖๗
-###### ส่วนปรับปรุงระวางแผนที่   กองเทคโนโลยีทำแผนที่   กรมที่ดิน
-----------------------------------------------------
-"""
+from google.cloud import bigquery
+import pandas as pd
+from datetime import datetime
+from google.oauth2 import service_account
 
-df = get_UN_data()
-iCount = len(df)
-col1, col2 = st.columns([0.45, 0.55])
-with col1:
-    Select_fil = st.selectbox('รายการสืบค้น',['รายการ', 'หมายเลขครุภัณฑ์', 'หมายเลขสินทรัพย์ตามระบบ GFMIS'])
+# ดึงข้อมูลจาก Secrets มาสร้าง Credentials
 
-with col2:
-    fil = st.text_input('คำค้นหา', key='fil')
-    
-"""
-----------------------------------------------------
-ตัวกรอง
-"""
-col5, col6 = st.columns(2)
-with col5:
-    List_ = []
-    for i in df.ประเภท.unique(): List_.append(i)
-    List_.sort()
-    List_type = ['ทั้งหมด']
-    List_type.extend(List_)
-    Select_type = st.selectbox("ประเภท", List_type  , key='List_type')
-    
-    List_ = []
-    for i in df.สถานที่.unique(): List_.append(i)
-    List_.sort()
-    List_place = ['ทั้งหมด']
-    List_place.extend(List_)
-    Select_place = st.selectbox("สถานที่", List_place , key='List_place')
-    
-with col6:
-    List_ = []
-    for i in df.รายการ.unique(): List_.append(i)
-    List_.sort()
-    List_name = ['ทั้งหมด']
-    List_name.extend(List_)
-    Select_name = st.selectbox("รายการ", List_name , key='List_name')
-    
-    List_ = []
-    for i in df.สภาพครุภัณฑ์.unique(): List_.append(i)
-    List_.sort()    
-    List_status = ['ทั้งหมด']
-    List_status.extend(List_)
-    Select_status = st.selectbox("สภาพครุภัณฑ์", List_status , key='List_status')
-    
-"""
-----------------------------------------------------
-""" 
-col3, col4 = st.columns([0.75, 0.25])
-def onclick():
-    st.session_state.fil = ''
-    st.session_state.List_type = 'ทั้งหมด'
-    st.session_state.List_name = 'ทั้งหมด'
-    st.session_state.List_status = 'ทั้งหมด'
-    st.session_state.List_place = 'ทั้งหมด'
-col4.button('Reset', type="primary", on_click=onclick)
 
-if not Select_name and Select_status and fil and Select_type and Select_place:
-    with col3:
-        "#### บัญชีครุภัณฑ์        | "+str(iCount)+" รายการ"
-    st.dataframe(data=df,use_container_width=True)
-elif Select_name == 'ทั้งหมด' and Select_status == 'ทั้งหมด' and fil == '' and Select_type == 'ทั้งหมด' and Select_place == 'ทั้งหมด':
-    with col3:
-        "#### บัญชีครุภัณฑ์        | "+str(iCount)+" รายการ"
-    st.dataframe(data=df,use_container_width=True)
-else:
-    data = df[df[Select_fil].str.contains(str(fil))]
-    if Select_type != 'ทั้งหมด': data = data[data.ประเภท==Select_type]
-    if Select_name != 'ทั้งหมด': data = data[data.รายการ==Select_name]
-    if Select_status != 'ทั้งหมด': data = data[data.สภาพครุภัณฑ์==Select_status]
-    if Select_place != 'ทั้งหมด': data = data[data.สถานที่==Select_place]  
-    data = data.reset_index(drop=True)
-    data.index = np.arange(1, len(data) + 1)
-    data.index.name = 'ลำดับ'
-    with col3:
-        "#### บัญชีครุภัณฑ์        | " + str(len(data)) + " จาก " + str(iCount) + " รายการ"
-    st.dataframe(data=data,use_container_width=True)
+# --- การตั้งค่าเบื้องต้น ---
+st.set_page_config(layout="wide")
+
+@st.cache_data(ttl=600)  # Cache ข้อมูล 10 นาที
+def get_full_data():
+    info = st.secrets["gcp_service_account"]
+    credentials = service_account.Credentials.from_service_account_info(info)
+    client = bigquery.Client(credentials=credentials, project=info["project_id"])
+    query = "SELECT * FROM `dol-workspace.Dashboard_Work69.v_master_report`"
+    return client.query(query).to_dataframe()
+
+df = get_full_data()
+
+# เตรียมข้อมูลวันที่ (แปลงเป็น Date เพื่อเปรียบเทียบ)
+df['DATE_SUBMIT'] = pd.to_datetime(df['DATE_SUBMIT']).dt.date
+today = datetime.now().date()
+
+# --- ส่วนของการคำนวณสรุปผล (Aggregation) ---
+def summary_data(input_df, group_col):
+    # 1. นับจำนวนชื่อทั้งหมด (มอบคุณ)
+    total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
+    
+    # 2. นับจำนวนที่มีวันที่ (ทำเสร็จแล้ว/ส่งแล้ว)
+    # กรองเอาเฉพาะแถวที่ DATE_SUBMIT ไม่เป็นค่าว่าง
+    finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
+    
+    # รวมตารางเข้าด้วยกัน
+    summary = pd.merge(total_assigned, finished_tasks, on=group_col, how='left').fillna(0)
+    summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
+    return summary
+
+# --- การวาง Layout หน้าจอ ---
+st.title("🚀 ระบบติดตามสถานะงานรายบุคคลและแผ่นงาน")
+st.divider()
+
+left_col, right_col = st.columns([1, 1])
+
+# --- [ฝั่งซ้าย: ข้อมูลทั้งหมด] ---
+with left_col:
+    st.header("📊 สรุปยอดงานทั้งหมด")
+    
+    # ตารางตามรายชื่อพนักงาน
+    st.subheader("👨‍💼 แยกตามรายชื่อ (Name)")
+    df_name_all = summary_data(df, 'NAME')
+    st.dataframe(df_name_all, use_container_width=True, hide_index=True)
+    
+    # ตารางตามชื่อแผ่นงาน
+    st.subheader("📂 แยกตามชื่อแผ่นงาน (Sheet Name)")
+    df_sheet_all = summary_data(df, 'sheet_name')
+    st.dataframe(df_sheet_all, use_container_width=True, hide_index=True)
+
+# --- [ฝั่งขวา: เฉพาะวันนี้] ---
+with right_col:
+    st.header(f"📅 เฉพาะวันนี้ ({today})")
+    
+    # กรองข้อมูลเฉพาะวันนี้
+    df_today = df[df['DATE_SUBMIT'] == today]
+    
+    if df_today.empty:
+        st.info("ยังไม่มีข้อมูลที่มีการระบุวันที่ของวันนี้")
+    else:
+        # ตารางตามรายชื่อพนักงาน (วันนี้)
+        st.subheader("👨‍💼 แยกตามรายชื่อ (Name)")
+        df_name_today = summary_data(df_today, 'NAME')
+        st.dataframe(df_name_today, use_container_width=True, hide_index=True)
+        
+        # ตารางตามชื่อแผ่นงาน (วันนี้)
+        st.subheader("📂 แยกตามชื่อแผ่นงาน (Sheet Name)")
+        df_sheet_today = summary_data(df_today, 'sheet_name')
+        st.dataframe(df_sheet_today, use_container_width=True, hide_index=True)
+
+# --- เพิ่มเติม: ปุ่มสำหรับ Refresh ข้อมูล ---
+if st.sidebar.button("ล้าง Cache และอัปเดตข้อมูล"):
+    st.cache_data.clear()
+    st.rerun()
