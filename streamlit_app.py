@@ -140,6 +140,7 @@ with right_col:
         #st.subheader("👨‍💼 สรุปรายบุคคล (วันนี้)")
         res_name_r = summary_with_metrics(display_df_r, 'NAME', show_total=show_total_r)
         res_name_r["มอบหมาย"] = 130
+        res_name_r["ความคืบหน้า (%)"] = (res_name_r['ดำเนินการแล้ว'] / res_name_r['มอบหมาย']) * 100
         display_styled_dataframe(res_name_r, "👨‍💼 สรุปรายบุคคล (วันนี้)")
         
         # Progress Bar ภาพรวมฝั่งขวา
