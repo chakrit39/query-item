@@ -88,7 +88,7 @@ def display_styled_dataframe(df_display, title):
         },
         use_container_width=True,
         hide_index=True,
-        height=500 #dynamic_height
+        height=dynamic_height #dynamic_height
     )
     
 # --- 3. การวาง Layout ---
