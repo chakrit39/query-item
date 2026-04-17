@@ -3,7 +3,7 @@ from google.cloud import bigquery
 import pandas as pd
 from datetime import datetime
 from google.oauth2 import service_account
-
+import plotly.express as px
 # --- 1. ตั้งค่าการเชื่อมต่อและ Scopes ---
 st.set_page_config(layout="wide", page_title="Performance Dashboard")
 
@@ -93,17 +93,12 @@ def display_styled_dataframe(df_display, title):
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามงาน พร้อมระบบกรองรายบุคคล")
 
-# --- ส่วนคำนวณกราฟเส้นย้อนหลัง 7 วัน ---
-# --- ส่วนคำนวณกราฟพื้นที่ย้อนหลัง 30 วัน ---
+# --- ส่วนคำนวณกราฟเส้น 30 วัน พร้อม Buffer ---
 st.subheader("📈 แนวโน้มผลงานย้อนหลัง 30 วัน")
 
-# 1. กำหนดช่วงเวลาย้อนหลัง 30 วันนับจากวันนี้
+# 1. เตรียมข้อมูล (30 วันล่าสุด)
 last_30_days = [today - pd.Timedelta(days=i) for i in range(30)]
-
-# 2. กรองข้อมูลเฉพาะงานที่ดำเนินการเสร็จในช่วง 30 วันนี้
 df_last_30 = df[df['DATE_SUBMIT'].isin(last_30_days)]
-
-# 3. นับจำนวนงานแยกตามวัน และ Reindex เพื่อเติมวันว่างให้เป็น 0
 trend_data_30 = (
     df_last_30.groupby('DATE_SUBMIT')
     .size()
@@ -112,19 +107,48 @@ trend_data_30 = (
     .sort_values('DATE_SUBMIT')
 )
 
-# 4. แสดงผลเป็น Area Chart เพื่อความสวยงามและเห็นมิติข้อมูล
-st.area_chart(
-    data=trend_data_30, 
+# 2. คำนวณหาค่าสูงสุด และเพิ่ม Buffer 20%
+max_val = trend_data_30['จำนวนงาน'].max()
+y_upper_limit = max_val * 1.20 if max_val > 0 else 10 # ถ้าค่าสูงสุดเป็น 0 ให้กันไว้ที่ 10
+
+# 3. สร้างกราฟ
+fig = px.line(
+    trend_data_30, 
     x='DATE_SUBMIT', 
-    y='จำนวนงาน', 
-    color="#29b5e8", 
-    use_container_width=True
+    y='จำนวนงาน',
+    text='จำนวนงาน',
+    markers=True
 )
 
-# เพิ่ม Metric สรุปสั้นๆ ใต้กราฟ
-total_30_days = trend_data_30['จำนวนงาน'].sum()
-avg_30_days = trend_data_30['จำนวนงาน'].mean()
-st.caption(f"📊 รวมผลงาน 30 วันล่าสุด: **{total_30_days:,}** รายการ (เฉลี่ยวันละ **{avg_30_days:.2f}** รายการ)")
+# 4. ปรับแต่งการแสดงผล
+fig.update_traces(
+    textposition="top center", 
+    line_color="#29b5e8",
+    marker=dict(size=8, symbol="circle"),
+    textfont=dict(size=10, color="white") # ปรับขนาด/สีตัวเลขบนกราฟ
+)
+
+fig.update_layout(
+    xaxis=dict(
+        title="วันที่",
+        type='date',
+        tickformat="%d %b", # แสดงเป็น "17 Apr"
+        dtick=86400000.0,    # บังคับแสดงทุกวัน (1 วัน = 86,400,000 ms)
+        tickangle=-45       # เอียงตัวอักษรเพื่อให้ไม่ซ้อนกัน
+    ),
+    yaxis=dict(
+        title="จำนวนงาน",
+        range=[0, y_upper_limit] # ตั้งค่าขอบเขตแกน Y ให้สูงกว่าค่า max 20%
+    ),
+    hovermode="x unified",
+    height=500,
+    margin=dict(l=20, r=20, t=40, b=20)
+)
+
+# 5. แสดงกราฟ
+st.plotly_chart(fig, use_container_width=True)
+
+st.caption(f"📊 รวมผลงาน 30 วันล่าสุด: **{trend_data_30['จำนวนงาน'].sum():,}** รายการ")
 
 st.divider()
 
