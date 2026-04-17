@@ -165,7 +165,8 @@ left_col, right_col = st.columns([1, 1])
 # --- [ฝั่งซ้าย: ข้อมูลทั้งหมด] ---
 with left_col:
     st.header("📊 ยอดงานสะสมทั้งหมด")
-    selected_name_l = st.selectbox("🔍 ค้นหาชื่อคน (ฝั่งซ้าย):", all_names, key="left_search")
+    l1, l2 = st.columns([0.5, 0.5])
+    selected_name_l = l1.selectbox("🔍 ค้นหาชื่อคน (ฝั่งซ้าย):", all_names, key="left_search")
     
     display_df_l = df if selected_name_l == "แสดงทุกคน" else df[df['NAME'] == selected_name_l]
     
@@ -191,11 +192,12 @@ with left_col:
 
 # --- [ฝั่งขวา: เฉพาะวันนี้] ---
 with right_col:
-    r1, r2, r3 = st.columns([0.45, 0.15, 0.4])
-    r1.header(f"📅 ผลงานตามวันที่")
-    selected_date = r2.date_input( "",today, key="date_selector")
     
-    selected_name_r = st.selectbox("🔍 ค้นหาชื่อคน (ฝั่งขวา):", all_names, key="right_search")
+    st.header(f"📅 ผลงานตามวันที่")
+    
+    r1, r2 = st.columns([0.5, 0.5])
+    selected_name_r = r1.selectbox("🔍 ค้นหาชื่อคน (ฝั่งขวา):", all_names, key="right_search")
+    selected_date = r2.date_input( "📆 เลือกวันที่ต้องการดู:",today, key="date_selector")
     
     df_today = df[df['DATE_SUBMIT'] == selected_date]
     display_df_r = df_today if selected_name_r == "แสดงทุกคน" else df_today[df_today['NAME'] == selected_name_r]
