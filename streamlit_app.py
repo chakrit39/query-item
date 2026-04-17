@@ -180,6 +180,8 @@ with left_col:
     # Progress Bar ภาพรวมฝั่งซ้าย
     total_pct_l = res_name_l.iloc[-1]['ความคืบหน้า (%)']
     st.write(f"**ความคืบหน้าภาพรวมสะสม:** {total_pct_l:.2f}%")
+    if total_pct_l > 100:
+        total_pct_l = 100
     st.progress(total_pct_l / 100)
 
     # ตารางรายแผ่นงาน
@@ -209,6 +211,8 @@ with right_col:
         # Progress Bar ภาพรวมฝั่งขวา
         total_pct_r = res_name_r.iloc[-1]['ความคืบหน้า (%)']
         st.write(f"**ความคืบหน้างานวันนี้:** {total_pct_r:.2f}%")
+        if total_pct_r > 100:
+            total_pct_r = 100
         st.progress(total_pct_r / 100)
 
         # ตารางรายแผ่นงาน (วันนี้)
