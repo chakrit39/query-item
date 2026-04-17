@@ -156,7 +156,7 @@ fig.update_layout(
 # 5. แสดงกราฟ
 st.plotly_chart(fig, use_container_width=True)
 
-st.caption(f"📊 รวมผลงาน 30 วันล่าสุด: **{trend_data_30['จำนวนงาน'].sum():,}** รายการ")
+st.caption(f"📊 รวมผลงาน 30 วันล่าสุด: **{trend_data_30['ยอดงาน'].sum():,}** รายการ")
 
 st.divider()
 
