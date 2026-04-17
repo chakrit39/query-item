@@ -94,20 +94,37 @@ def display_styled_dataframe(df_display, title):
 st.title("🚀 Dashboard ติดตามงาน พร้อมระบบกรองรายบุคคล")
 
 # --- ส่วนคำนวณกราฟเส้นย้อนหลัง 7 วัน ---
-st.divider()
-st.subheader("📈 แนวโน้มผลงานย้อนหลัง 7 วัน (จำนวนงานที่ดำเนินการแล้ว)")
+# --- ส่วนคำนวณกราฟพื้นที่ย้อนหลัง 30 วัน ---
+st.subheader("📈 แนวโน้มผลงานย้อนหลัง 30 วัน")
 
-# 1. เตรียมข้อมูลวันที่ย้อนหลัง 7 วัน
-last_7_days = [today - pd.Timedelta(days=i) for i in range(7)]
-df_last_7 = df[df['DATE_SUBMIT'].isin(last_7_days)]
+# 1. กำหนดช่วงเวลาย้อนหลัง 30 วันนับจากวันนี้
+last_30_days = [today - pd.Timedelta(days=i) for i in range(30)]
 
-# 2. นับจำนวนงานแยกตามวัน
-# ใช้ .reindex เพื่อให้มั่นใจว่าวันไหนไม่มีงาน จะขึ้นเป็น 0 (กราฟจะได้ไม่กระโดด)
-trend_data = df_last_7.groupby('DATE_SUBMIT').size().reindex(last_7_days, fill_value=0).reset_index(name='จำนวนงาน')
-trend_data = trend_data.sort_values('DATE_SUBMIT') # เรียงจากอดีตมาปัจจุบัน
+# 2. กรองข้อมูลเฉพาะงานที่ดำเนินการเสร็จในช่วง 30 วันนี้
+df_last_30 = df[df['DATE_SUBMIT'].isin(last_30_days)]
 
-# 3. แสดงกราฟเส้น
-st.line_chart(data=trend_data, x='DATE_SUBMIT', y='จำนวนงาน', color="#29b5e8")
+# 3. นับจำนวนงานแยกตามวัน และ Reindex เพื่อเติมวันว่างให้เป็น 0
+trend_data_30 = (
+    df_last_30.groupby('DATE_SUBMIT')
+    .size()
+    .reindex(last_30_days, fill_value=0)
+    .reset_index(name='จำนวนงาน')
+    .sort_values('DATE_SUBMIT')
+)
+
+# 4. แสดงผลเป็น Area Chart เพื่อความสวยงามและเห็นมิติข้อมูล
+st.area_chart(
+    data=trend_data_30, 
+    x='DATE_SUBMIT', 
+    y='จำนวนงาน', 
+    color="#29b5e8", 
+    use_container_width=True
+)
+
+# เพิ่ม Metric สรุปสั้นๆ ใต้กราฟ
+total_30_days = trend_data_30['จำนวนงาน'].sum()
+avg_30_days = trend_data_30['จำนวนงาน'].mean()
+st.caption(f"📊 รวมผลงาน 30 วันล่าสุด: **{total_30_days:,}** รายการ (เฉลี่ยวันละ **{avg_30_days:.2f}** รายการ)")
 
 st.divider()
 
