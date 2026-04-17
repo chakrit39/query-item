@@ -4,86 +4,108 @@ import pandas as pd
 from datetime import datetime
 from google.oauth2 import service_account
 
-# ดึงข้อมูลจาก Secrets มาสร้าง Credentials
+# --- 1. ตั้งค่าการเชื่อมต่อและ Scopes ---
+st.set_page_config(layout="wide", page_title="Performance Dashboard")
 
-
-# --- การตั้งค่าเบื้องต้น ---
-st.set_page_config(layout="wide")
-
-@st.cache_data(ttl=600)  # Cache ข้อมูล 10 นาที
+@st.cache_data(ttl=600)
 def get_full_data():
-    SCOPES = [
-    "https://www.googleapis.com/auth/drive",
-    "https://www.googleapis.com/auth/bigquery",
-    "https://www.googleapis.com/auth/cloud-platform"
-    ]
+    # ดึงข้อมูลจาก Secrets (Streamlit Cloud)
     info = st.secrets["gcp_service_account"]
+    SCOPES = [
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/bigquery",
+        "https://www.googleapis.com/auth/cloud-platform"
+    ]
     credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
-    client = bigquery.Client(credentials=credentials, project="dol-workspace")
+    client = bigquery.Client(credentials=credentials, project=info["project_id"])
+    
     query = "SELECT * FROM `dol-workspace.Dashboard_Work69.v_master_report`"
     return client.query(query).to_dataframe()
 
-df = get_full_data()
+# โหลดข้อมูล
+try:
+    df = get_full_data()
+    df['DATE_SUBMIT'] = pd.to_datetime(df['DATE_SUBMIT']).dt.date
+    today = datetime.now().date()
+except Exception as e:
+    st.error(f"เกิดข้อผิดพลาดในการดึงข้อมูล: {e}")
+    st.stop()
 
-# เตรียมข้อมูลวันที่ (แปลงเป็น Date เพื่อเปรียบเทียบ)
-df['DATE_SUBMIT'] = pd.to_datetime(df['DATE_SUBMIT']).dt.date
-today = datetime.now().date()
-
-# --- ส่วนของการคำนวณสรุปผล (Aggregation) ---
-def summary_data(input_df, group_col):
-    # 1. นับจำนวนชื่อทั้งหมด (มอบคุณ)
+# --- 2. ฟังก์ชันคำนวณสรุปผลพร้อม Progress Bar ---
+def summary_with_metrics(input_df, group_col):
+    # นับจำนวนงาน
     total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
-    
-    # 2. นับจำนวนที่มีวันที่ (ทำเสร็จแล้ว/ส่งแล้ว)
-    # กรองเอาเฉพาะแถวที่ DATE_SUBMIT ไม่เป็นค่าว่าง
     finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
     
-    # รวมตารางเข้าด้วยกัน
+    # รวมตาราง
     summary = pd.merge(total_assigned, finished_tasks, on=group_col, how='left').fillna(0)
     summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
-    return summary
+    
+    # คำนวณเปอร์เซ็นต์ (%)
+    summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
+    
+    # เพิ่มแถวผลรวม (Total)
+    total_row = pd.DataFrame({
+        group_col: ['--- รวมทั้งหมด ---'],
+        'มอบหมาย': [summary['มอบหมาย'].sum()],
+        'ดำเนินการแล้ว': [summary['ดำเนินการแล้ว'].sum()],
+        'ความคืบหน้า (%)': [(summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0]
+    })
+    
+    return pd.concat([summary, total_row], ignore_index=True)
 
-# --- การวาง Layout หน้าจอ ---
-st.title("🚀 ระบบติดตามสถานะงานรายบุคคลและแผ่นงาน")
-st.divider()
+# --- 3. การวาง Layout ---
+st.title("🚀 Dashboard ติดตามงาน พร้อมระบบกรองรายบุคคล")
+
+# สร้าง Dropdown กรองชื่อคน (Global หรือแยกฝั่ง)
+all_names = ["แสดงทุกคน"] + sorted(df['NAME'].unique().tolist())
 
 left_col, right_col = st.columns([1, 1])
 
 # --- [ฝั่งซ้าย: ข้อมูลทั้งหมด] ---
 with left_col:
-    st.header("📊 สรุปยอดงานทั้งหมด")
+    st.header("📊 ยอดงานสะสมทั้งหมด")
+    selected_name_l = st.selectbox("🔍 ค้นหาชื่อคน (ฝั่งซ้าย):", all_names, key="left_search")
     
-    # ตารางตามรายชื่อพนักงาน
-    st.subheader("👨‍💼 แยกตามรายชื่อ (Name)")
-    df_name_all = summary_data(df, 'NAME')
-    st.dataframe(df_name_all, use_container_width=True, hide_index=True)
+    display_df_l = df if selected_name_l == "แสดงทุกคน" else df[df['NAME'] == selected_name_l]
     
-    # ตารางตามชื่อแผ่นงาน
-    st.subheader("📂 แยกตามชื่อแผ่นงาน (Sheet Name)")
-    df_sheet_all = summary_data(df, 'sheet_name')
-    st.dataframe(df_sheet_all, use_container_width=True, hide_index=True)
+    # ตารางรายคน
+    st.subheader("👨‍💼 สรุปรายบุคคล")
+    res_name_l = summary_with_metrics(display_df_l, 'NAME')
+    st.dataframe(res_name_l, use_container_width=True, hide_index=True)
+    
+    # Progress Bar ภาพรวมฝั่งซ้าย
+    total_pct_l = res_name_l.iloc[-1]['ความคืบหน้า (%)']
+    st.write(f"**ความคืบหน้าภาพรวมสะสม:** {total_pct_l:.2f}%")
+    st.progress(total_pct_l / 100)
+
+    # ตารางรายแผ่นงาน
+    st.subheader("📂 สรุปตามแผ่นงาน")
+    res_sheet_l = summary_with_metrics(display_df_l, 'sheet_name')
+    st.dataframe(res_sheet_l, use_container_width=True, hide_index=True)
 
 # --- [ฝั่งขวา: เฉพาะวันนี้] ---
 with right_col:
-    st.header(f"📅 เฉพาะวันนี้ ({today})")
+    st.header(f"📅 ผลงานเฉพาะวันนี้ ({today})")
+    selected_name_r = st.selectbox("🔍 ค้นหาชื่อคน (ฝั่งขวา):", all_names, key="right_search")
     
-    # กรองข้อมูลเฉพาะวันนี้
     df_today = df[df['DATE_SUBMIT'] == today]
+    display_df_r = df_today if selected_name_r == "แสดงทุกคน" else df_today[df_today['NAME'] == selected_name_r]
     
-    if df_today.empty:
-        st.info("ยังไม่มีข้อมูลที่มีการระบุวันที่ของวันนี้")
+    if display_df_r.empty:
+        st.warning("⚠️ ไม่มีข้อมูลงานที่ดำเนินการในวันนี้")
     else:
-        # ตารางตามรายชื่อพนักงาน (วันนี้)
-        st.subheader("👨‍💼 แยกตามรายชื่อ (Name)")
-        df_name_today = summary_data(df_today, 'NAME')
-        st.dataframe(df_name_today, use_container_width=True, hide_index=True)
+        # ตารางรายคน (วันนี้)
+        st.subheader("👨‍💼 สรุปรายบุคคล (วันนี้)")
+        res_name_r = summary_with_metrics(display_df_r, 'NAME')
+        st.dataframe(res_name_r, use_container_width=True, hide_index=True)
         
-        # ตารางตามชื่อแผ่นงาน (วันนี้)
-        st.subheader("📂 แยกตามชื่อแผ่นงาน (Sheet Name)")
-        df_sheet_today = summary_data(df_today, 'sheet_name')
-        st.dataframe(df_sheet_today, use_container_width=True, hide_index=True)
+        # Progress Bar ภาพรวมฝั่งขวา
+        total_pct_r = res_name_r.iloc[-1]['ความคืบหน้า (%)']
+        st.write(f"**ความคืบหน้างานวันนี้:** {total_pct_r:.2f}%")
+        st.progress(total_pct_r / 100)
 
-# --- เพิ่มเติม: ปุ่มสำหรับ Refresh ข้อมูล ---
-if st.sidebar.button("ล้าง Cache และอัปเดตข้อมูล"):
-    st.cache_data.clear()
-    st.rerun()
+        # ตารางรายแผ่นงาน (วันนี้)
+        st.subheader("📂 สรุปตามแผ่นงาน (วันนี้)")
+        res_sheet_r = summary_with_metrics(display_df_r, 'sheet_name')
+        st.dataframe(res_sheet_r, use_container_width=True, hide_index=True)
