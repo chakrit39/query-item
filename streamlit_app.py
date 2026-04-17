@@ -35,7 +35,7 @@ except Exception as e:
     st.stop()
 
 # --- 2. ฟังก์ชันคำนวณสรุปผลพร้อม Progress Bar ---
-def summary_with_metrics(input_df, group_col, show_total=True):
+def summary_with_metrics(input_df, group_col, show_total=True, daily=False):
     # นับจำนวนงาน
     total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
     finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
@@ -43,7 +43,8 @@ def summary_with_metrics(input_df, group_col, show_total=True):
     # รวมตาราง
     summary = pd.merge(total_assigned, finished_tasks, on=group_col, how='left').fillna(0)
     summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
-    
+    if daily: 
+        summary['มอบหมาย'] = 130
     # คำนวณเปอร์เซ็นต์ (%)
     summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
     
@@ -138,15 +139,13 @@ with right_col:
         
         # ตารางรายคน (วันนี้)
         #st.subheader("👨‍💼 สรุปรายบุคคล (วันนี้)")
-        res_name_r = summary_with_metrics(display_df_r, 'NAME', show_total=show_total_r)
-        res_name_r["มอบหมาย"] = 130
-        res_name_r["ความคืบหน้า (%)"] = (res_name_r['ดำเนินการแล้ว'] / res_name_r['มอบหมาย']) * 100
+        res_name_r = summary_with_metrics(display_df_r, 'NAME', show_total=show_total_r, daily=True)
         display_styled_dataframe(res_name_r, "👨‍💼 สรุปรายบุคคล (วันนี้)")
         
         # Progress Bar ภาพรวมฝั่งขวา
-        total_pct_r = res_name_r.iloc[-1]['ความคืบหน้า (%)']
-        st.write(f"**ความคืบหน้างานวันนี้:** {total_pct_r:.2f}%")
-        st.progress(total_pct_r / 100)
+        #total_pct_r = res_name_r.iloc[-1]['ความคืบหน้า (%)']
+        #st.write(f"**ความคืบหน้างานวันนี้:** {total_pct_r:.2f}%")
+        #st.progress(total_pct_r / 100)
 
         # ตารางรายแผ่นงาน (วันนี้)
         #st.subheader("📂 สรุปตามแผ่นงาน (วันนี้)")
