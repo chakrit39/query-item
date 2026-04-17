@@ -93,6 +93,24 @@ def display_styled_dataframe(df_display, title):
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามงาน พร้อมระบบกรองรายบุคคล")
 
+# --- ส่วนคำนวณกราฟเส้นย้อนหลัง 7 วัน ---
+st.divider()
+st.subheader("📈 แนวโน้มผลงานย้อนหลัง 7 วัน (จำนวนงานที่ดำเนินการแล้ว)")
+
+# 1. เตรียมข้อมูลวันที่ย้อนหลัง 7 วัน
+last_7_days = [today - pd.Timedelta(days=i) for i in range(7)]
+df_last_7 = df[df['DATE_SUBMIT'].isin(last_7_days)]
+
+# 2. นับจำนวนงานแยกตามวัน
+# ใช้ .reindex เพื่อให้มั่นใจว่าวันไหนไม่มีงาน จะขึ้นเป็น 0 (กราฟจะได้ไม่กระโดด)
+trend_data = df_last_7.groupby('DATE_SUBMIT').size().reindex(last_7_days, fill_value=0).reset_index(name='จำนวนงาน')
+trend_data = trend_data.sort_values('DATE_SUBMIT') # เรียงจากอดีตมาปัจจุบัน
+
+# 3. แสดงกราฟเส้น
+st.line_chart(data=trend_data, x='DATE_SUBMIT', y='จำนวนงาน', color="#29b5e8")
+
+st.divider()
+
 # สร้าง Dropdown กรองชื่อคน (Global หรือแยกฝั่ง)
 all_names = ["แสดงทุกคน"] + sorted(df['NAME'].dropna().astype(str).unique().tolist())
 
