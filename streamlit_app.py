@@ -243,7 +243,7 @@ right_col_ .dataframe(df_TYP, use_container_width=True, hide_index=True,
 
 df_IMG = df.groupby('QUA_PIC').size().reset_index(name='จำนวน')
 df_IMG = df_IMG.sort_values(by='จำนวน', ascending=False)
-df_IMG = df_IMG[df_TYP['QUA_PIC']!="                                                                                                                                                                                                      "]
+df_IMG = df_IMG[df_IMG['QUA_PIC']!="                                                                                                                                                                                                      "]
 dynamic_height = 35 * (len(df_IMG) + 1)
 right_col_ .dataframe(df_IMG, use_container_width=True, hide_index=True,
                     column_config={
