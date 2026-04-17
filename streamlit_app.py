@@ -231,9 +231,19 @@ left_col_, right_col_ = st.columns([1, 1])
     #total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
     #finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
 df_TYP = df.groupby('SURV_TYP').size().reset_index(name='จำนวน')
+df_TYP = df_TYP.sort_values(by='จำนวน', ascending=False)
 df_TYP = df_TYP[df_TYP['SURV_TYP']!="                                                                                                                                                                                                      "]
-left_col_.dataframe(df_TYP, use_container_width=True, hide_index=True)
+left_col_.dataframe(df_TYP, use_container_width=True, hide_index=True,
+                    column_config={
+                                    "จำนวน": st.column_config.NumberColumn("มอบหมาย", format="%,d ", alignment="center"),
+                                    },
+                   )
 
 df_BUILD = df.groupby('BUILD_FROM').size().reset_index(name='จำนวน')
+df_BUILD = df_BUILD.sort_values(by='จำนวน', ascending=False)
 df_BUILD = df_BUILD[df_BUILD['BUILD_FROM']!="                                                                                                                                                                                                      "]
-right_col_.dataframe(df_BUILD, use_container_width=True, hide_index=True)
+right_col_.dataframe(df_BUILD, use_container_width=True, hide_index=True,
+                    column_config={
+                                    "จำนวน": st.column_config.NumberColumn("มอบหมาย", format="%,d ", alignment="center"),
+                                    },
+                   )
