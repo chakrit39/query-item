@@ -193,7 +193,7 @@ with left_col:
 with right_col:
     r1, r2, r3 = st.columns([0.3, 0.3, 0.4])
     r1.header(f"📅 ผลงานตามวันที่")
-    selected_date = r2.date_input("📆 เลือกวันที่ต้องการดู:", today, key="date_selector")
+    selected_date = r2.date_input("", today, key="date_selector")
     
     selected_name_r = st.selectbox("🔍 ค้นหาชื่อคน (ฝั่งขวา):", all_names, key="right_search")
     
