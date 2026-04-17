@@ -35,7 +35,7 @@ except Exception as e:
     st.stop()
 
 # --- 2. ฟังก์ชันคำนวณสรุปผลพร้อม Progress Bar ---
-def summary_with_metrics(input_df, group_col):
+def summary_with_metrics(input_df, group_col, show_total=True):
     # นับจำนวนงาน
     total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
     finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
@@ -47,15 +47,20 @@ def summary_with_metrics(input_df, group_col):
     # คำนวณเปอร์เซ็นต์ (%)
     summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
     
-    # เพิ่มแถวผลรวม (Total)
-    total_row = pd.DataFrame({
-        group_col: ['--- รวมทั้งหมด ---'],
-        'มอบหมาย': [summary['มอบหมาย'].sum()],
-        'ดำเนินการแล้ว': [summary['ดำเนินการแล้ว'].sum()],
-        'ความคืบหน้า (%)': [(summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0]
-    })
+    # --- เพิ่มการเรียงลำดับจากมากไปน้อยตามคอลัมน์ 'ดำเนินการแล้ว' ---
+    summary = summary.sort_values(by='ดำเนินการแล้ว', ascending=False)
     
-    return pd.concat([summary, total_row], ignore_index=True)
+    # เงื่อนไขการเพิ่มแถวผลรวม (Total)
+    if show_total:
+        total_row = pd.DataFrame({
+            group_col: ['--- รวมทั้งหมด ---'],
+            'มอบหมาย': [summary['มอบหมาย'].sum()],
+            'ดำเนินการแล้ว': [summary['ดำเนินการแล้ว'].sum()],
+            'ความคืบหน้า (%)': [(summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0]
+        })
+        return pd.concat([summary, total_row], ignore_index=True)
+    
+    return summary
 
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามงาน พร้อมระบบกรองรายบุคคล")
@@ -72,9 +77,12 @@ with left_col:
     
     display_df_l = df if selected_name_l == "แสดงทุกคน" else df[df['NAME'] == selected_name_l]
     
-    # ตารางรายคน
+    # เช็คว่าจะโชว์ผลรวมไหม (ถ้าเลือกชื่อคน จะไม่โชว์)
+    show_total_l = True if selected_name_l == "แสดงทุกคน" else False
+    
+    # ตารางรายคน (ส่ง show_total เข้าไป)
     st.subheader("👨‍💼 สรุปรายบุคคล")
-    res_name_l = summary_with_metrics(display_df_l, 'NAME')
+    res_name_l = summary_with_metrics(display_df_l, 'NAME', show_total=show_total_l)
     st.dataframe(res_name_l, use_container_width=True, hide_index=True)
     
     # Progress Bar ภาพรวมฝั่งซ้าย
@@ -98,9 +106,12 @@ with right_col:
     if display_df_r.empty:
         st.warning("⚠️ ไม่มีข้อมูลงานที่ดำเนินการในวันนี้")
     else:
+        # เช็คว่าจะโชว์ผลรวมไหม (ถ้าเลือกชื่อคน จะไม่โชว์)
+        show_total_r = True if selected_name_r == "แสดงทุกคน" else False
+        
         # ตารางรายคน (วันนี้)
         st.subheader("👨‍💼 สรุปรายบุคคล (วันนี้)")
-        res_name_r = summary_with_metrics(display_df_r, 'NAME')
+        res_name_r = summary_with_metrics(display_df_r, 'NAME', show_total=show_total_r)
         st.dataframe(res_name_r, use_container_width=True, hide_index=True)
         
         # Progress Bar ภาพรวมฝั่งขวา
