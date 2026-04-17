@@ -143,9 +143,9 @@ with right_col:
         display_styled_dataframe(res_name_r, "👨‍💼 สรุปรายบุคคล (วันนี้)")
         
         # Progress Bar ภาพรวมฝั่งขวา
-        #total_pct_r = res_name_r.iloc[-1]['ความคืบหน้า (%)']
-        #st.write(f"**ความคืบหน้างานวันนี้:** {total_pct_r:.2f}%")
-        #st.progress(total_pct_r / 100)
+        total_pct_r = res_name_r.iloc[-1]['ความคืบหน้า (%)']
+        st.write(f"**ความคืบหน้างานวันนี้:** {total_pct_r:.2f}%")
+        st.progress(total_pct_r / 100)
 
         # ตารางรายแผ่นงาน (วันนี้)
         #st.subheader("📂 สรุปตามแผ่นงาน (วันนี้)")
