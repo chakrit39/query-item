@@ -97,7 +97,7 @@ st.title("🚀 Dashboard ติดตามงาน พร้อมระบบ
 st.subheader("📈 แนวโน้มผลงานย้อนหลัง 30 วัน")
 
 # 1. เตรียมข้อมูล (30 วันล่าสุด)
-last_30_days = [today - pd.Timedelta(days=i) for i in range(90)]
+last_30_days = [today - pd.Timedelta(days=i) for i in range(30)]
 df_last_30 = df[df['DATE_SUBMIT'].isin(last_30_days)]
 trend_data_30 = (
     df_last_30.groupby('DATE_SUBMIT')
@@ -134,7 +134,7 @@ fig.update_layout(
         type='date',
         tickformat="%d %b", # แสดงเป็น "17 Apr"
         dtick=86400000.0,    # บังคับแสดงทุกวัน (1 วัน = 86,400,000 ms)
-        tickangle=-45       # เอียงตัวอักษรเพื่อให้ไม่ซ้อนกัน
+        tickangle=0     # เอียงตัวอักษรเพื่อให้ไม่ซ้อนกัน
     ),
     yaxis=dict(
         title="จำนวนงาน",
