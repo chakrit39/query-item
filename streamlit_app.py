@@ -93,11 +93,18 @@ def display_styled_dataframe(df_display, title):
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามงาน พร้อมระบบกรองรายบุคคล")
 
+# สร้าง Dropdown กรองชื่อคน (Global หรือแยกฝั่ง)
+all_names = ["แสดงทุกคน"] + sorted(df['NAME'].dropna().astype(str).unique().tolist())
+
 # --- ส่วนคำนวณกราฟเส้น 30 วัน พร้อม Buffer ---
+st.divider()
 st.subheader("📈 แนวโน้มผลงานย้อนหลัง 30 วัน")
+selected_name = st.selectbox("🔍 ค้นหาชื่อคน:", all_names, key="trend_search")
 
 # 1. เตรียมข้อมูล (30 วันล่าสุด)
 last_30_days = [today - pd.Timedelta(days=i) for i in range(30)]
+
+df_last_30 = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
 df_last_30 = df[df['DATE_SUBMIT'].isin(last_30_days)]
 trend_data_30 = (
     df_last_30.groupby('DATE_SUBMIT')
@@ -151,9 +158,6 @@ st.plotly_chart(fig, use_container_width=True)
 st.caption(f"📊 รวมผลงาน 30 วันล่าสุด: **{trend_data_30['จำนวนงาน'].sum():,}** รายการ")
 
 st.divider()
-
-# สร้าง Dropdown กรองชื่อคน (Global หรือแยกฝั่ง)
-all_names = ["แสดงทุกคน"] + sorted(df['NAME'].dropna().astype(str).unique().tolist())
 
 left_col, right_col = st.columns([1, 1])
 
