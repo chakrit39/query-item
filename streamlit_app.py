@@ -109,7 +109,7 @@ trend_data_30 = (
 
 # 2. คำนวณหาค่าสูงสุด และเพิ่ม Buffer 20%
 max_val = trend_data_30['จำนวนงาน'].max()
-y_upper_limit = max_val * 1.20 if max_val > 0 else 10 # ถ้าค่าสูงสุดเป็น 0 ให้กันไว้ที่ 10
+y_upper_limit = max_val * 1.30 if max_val > 0 else 1000 # ถ้าค่าสูงสุดเป็น 0 ให้กันไว้ที่ 10
 
 # 3. สร้างกราฟ
 fig = px.line(
@@ -142,7 +142,7 @@ fig.update_layout(
     ),
     hovermode="x unified",
     height=500,
-    margin=dict(l=20, r=20, t=40, b=20)
+    #margin=dict(l=20, r=20, t=40, b=20)
 )
 
 # 5. แสดงกราฟ
