@@ -219,7 +219,7 @@ with right_col:
     r1, r2 = st.columns([0.5, 0.5])
     r1.header(f"📅 ผลงานตามวันที่")
     selected_name_r = selected_name #r1.selectbox("🔍 ค้นหาชื่อคน (ฝั่งขวา):", all_names, key="right_search")
-    selected_date = r2.date_input( "📆 เลือกวันที่ต้องการดู:",today, key="date_selector",label_visibility="collapsed")
+    selected_date = r2.date_input( "📆 เลือกวันที่ต้องการดู:",today, key="date_selector")
     
     df_today = df[df['DATE_SUBMIT'] == selected_date]
     display_df_r = df_today if selected_name_r == "แสดงทุกคน" else df_today[df_today['NAME'] == selected_name_r]
