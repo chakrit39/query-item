@@ -230,7 +230,7 @@ with right_col:
                 <style>
                 /* เลือกช่อง Date Input เฉพาะในส่วนนี้ */
                 div[data-testid="stDateInput"] {
-                    margin-top: 10px; /* ปรับค่าตัวเลขนี้ (8-12px) จนกว่าจะตรงตามความพอใจ */
+                    margin-top: 5px; /* ปรับค่าตัวเลขนี้ (8-12px) จนกว่าจะตรงตามความพอใจ */
                 }
                 /* ปรับความกว้างของช่องให้กระชับขึ้นถ้าจำเป็น */
                 div[data-testid="stDateInput"] > div {
