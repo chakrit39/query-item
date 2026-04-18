@@ -219,7 +219,7 @@ with right_col:
     #r1, r2 = st.columns([0.5, 0.5])
     #r1.header(f"📅 ผลงานตามวันที่")
     # 1. สร้างคอลัมน์ โดยให้คอลัมน์ซ้ายกว้างกว่า (สำหรับ Header) และคอลัมน์ขวาพอดีกับวันที่
-    col_title, col_date, col_date_ = st.columns([0.3, 0.3,0.3])
+    col_title, col_date, col_date_ = st.columns([0.4, 0.3,0.3])
     
     with col_title:
         # ใช้ anchor=False เพื่อไม่ให้มีไอคอนลิงก์โผล่มาทับ
@@ -230,7 +230,7 @@ with right_col:
                 <style>
                 /* เลือกช่อง Date Input เฉพาะในส่วนนี้ */
                 div[data-testid="stDateInput"] {
-                    margin-top: 8px; /* ปรับค่าตัวเลขนี้ (8-12px) จนกว่าจะตรงตามความพอใจ */
+                    margin-top: 10px; /* ปรับค่าตัวเลขนี้ (8-12px) จนกว่าจะตรงตามความพอใจ */
                 }
                 /* ปรับความกว้างของช่องให้กระชับขึ้นถ้าจำเป็น */
                 div[data-testid="stDateInput"] > div {
