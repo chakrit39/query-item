@@ -216,10 +216,36 @@ with left_col:
 # --- [ฝั่งขวา: เฉพาะวันนี้] ---
 with right_col:
     
-    r1, r2 = st.columns([0.5, 0.5])
-    r1.header(f"📅 ผลงานตามวันที่")
+    #r1, r2 = st.columns([0.5, 0.5])
+    #r1.header(f"📅 ผลงานตามวันที่")
+    # 1. สร้างคอลัมน์ โดยให้คอลัมน์ซ้ายกว้างกว่า (สำหรับ Header) และคอลัมน์ขวาพอดีกับวันที่
+    col_title, col_date = st.columns([0.7, 0.3])
+    
+    with col_title:
+        # ใช้ anchor=False เพื่อไม่ให้มีไอคอนลิงก์โผล่มาทับ
+        st.header("📅 ผลงานตามวันที่", anchor=False)
+    
+    with col_date:
+        # ใช้ label_visibility="collapsed" เพื่อซ่อนข้อความ "เลือกวันที่ต้องการดู"
+        # ซึ่งจะทำให้ตัวช่อง Input ขยับขึ้นมาอยู่ในระดับเดียวกับ Header
+        selected_date = st.date_input(
+            "เลือกวันที่ต้องการดู:", # ใส่ไว้เป็นความหมาย แต่จะถูกซ่อน
+            value=today,
+            label_visibility="collapsed",
+            key="main_date_input"
+        )
+    
+    # เพิ่ม CSS เล็กน้อยเพื่อให้ตำแหน่งช่องวันที่ตรงกับ Header เป๊ะๆ (Optional)
+    st.markdown("""
+        <style>
+        div[data-testid="stDateInput"] {
+            margin-top: 5px; /* ปรับค่านี้เพื่อให้ช่องวันที่ขยับขึ้น-ลงตามความสวยงาม */
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
     selected_name_r = selected_name #r1.selectbox("🔍 ค้นหาชื่อคน (ฝั่งขวา):", all_names, key="right_search")
-    selected_date = r2.date_input( "📆 เลือกวันที่ต้องการดู:",today, key="date_selector",label_visibility="collapsed")
+    #selected_date = r2.date_input( "📆 เลือกวันที่ต้องการดู:",today, key="date_selector",label_visibility="collapsed")
     
     df_today = df[df['DATE_SUBMIT'] == selected_date]
     display_df_r = df_today if selected_name_r == "แสดงทุกคน" else df_today[df_today['NAME'] == selected_name_r]
