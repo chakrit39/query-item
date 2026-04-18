@@ -226,8 +226,18 @@ with right_col:
         st.header("📅 ผลงานตามวันที่", anchor=False)
     
     with col_date:
-        # ใช้ label_visibility="collapsed" เพื่อซ่อนข้อความ "เลือกวันที่ต้องการดู"
-        # ซึ่งจะทำให้ตัวช่อง Input ขยับขึ้นมาอยู่ในระดับเดียวกับ Header
+        st.markdown("""
+                <style>
+                /* เลือกช่อง Date Input เฉพาะในส่วนนี้ */
+                div[data-testid="stDateInput"] {
+                    margin-top: 10px; /* ปรับค่าตัวเลขนี้ (8-12px) จนกว่าจะตรงตามความพอใจ */
+                }
+                /* ปรับความกว้างของช่องให้กระชับขึ้นถ้าจำเป็น */
+                div[data-testid="stDateInput"] > div {
+                    width: 100%;
+                }
+                </style>
+            """, unsafe_allow_html=True)
         selected_date = st.date_input(
             "เลือกวันที่ต้องการดู:", # ใส่ไว้เป็นความหมาย แต่จะถูกซ่อน
             value=today,
@@ -235,15 +245,6 @@ with right_col:
             key="main_date_input"
         )
     
-    # เพิ่ม CSS เล็กน้อยเพื่อให้ตำแหน่งช่องวันที่ตรงกับ Header เป๊ะๆ (Optional)
-    st.markdown("""
-        <style>
-        div[data-testid="stDateInput"] {
-            margin-top: 5px; /* ปรับค่านี้เพื่อให้ช่องวันที่ขยับขึ้น-ลงตามความสวยงาม */
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
     selected_name_r = selected_name #r1.selectbox("🔍 ค้นหาชื่อคน (ฝั่งขวา):", all_names, key="right_search")
     #selected_date = r2.date_input( "📆 เลือกวันที่ต้องการดู:",today, key="date_selector",label_visibility="collapsed")
     
