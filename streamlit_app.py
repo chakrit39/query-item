@@ -188,7 +188,7 @@ left_col, right_col = st.columns([1, 1])
 # --- [ฝั่งซ้าย: ข้อมูลทั้งหมด] ---
 with left_col:
     st.header("📊 ยอดงานสะสมทั้งหมด")
-    l1, l2 = st.columns([0.5, 0.5])
+    #l1, l2 = st.columns([0.5, 0.5])
     selected_name_l = selected_name #l1.selectbox("🔍 ค้นหาชื่อคน (ฝั่งซ้าย):", all_names, key="left_search")
     
     display_df_l = df if selected_name_l == "แสดงทุกคน" else df[df['NAME'] == selected_name_l]
