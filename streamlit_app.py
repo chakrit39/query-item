@@ -157,6 +157,7 @@ fig.update_layout(
 # 5. แสดงกราฟ
 st.plotly_chart(fig, use_container_width=True)
 
+trend_data_30['DATE_SUBMIT'] = pd.to_datetime(trend_data_30['DATE_SUBMIT'])
 # 1. สร้างคอลัมน์ระบุวันในสัปดาห์ (0=จันทร์, 5=เสาร์, 6=อาทิตย์)
 trend_data_30['day_of_week'] = trend_data_30['DATE_SUBMIT'].dt.dayofweek
 # 2. กรองข้อมูลเฉพาะ: ไม่ใช่เสาร์(5), ไม่ใช่อาทิตย์(6) และ ยอดงานต้องมากกว่า 0
