@@ -215,9 +215,9 @@ with left_col:
 
 # --- [ฝั่งขวา: เฉพาะวันนี้] ---
 with right_col:
-    
-    st.header(f"📅 ผลงานตามวันที่")
-    
+    r11,r22 = st.columns([0.5, 0.5])
+    r11.header(f"📅 ผลงานตามวันที่")
+    selected_date2 = r22.date_input( "",today, key="date_selector2")
     r1, r2 = st.columns([0.5, 0.5])
     selected_name_r = r1.selectbox("🔍 ค้นหาชื่อคน (ฝั่งขวา):", all_names, key="right_search")
     selected_date = r2.date_input( "📆 เลือกวันที่ต้องการดู:",today, key="date_selector")
