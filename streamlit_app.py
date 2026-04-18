@@ -157,8 +157,27 @@ fig.update_layout(
 # 5. แสดงกราฟ
 st.plotly_chart(fig, use_container_width=True)
 
-st.caption(f"📊 รวมผลงาน 30 วันล่าสุด: **{trend_data_30['ยอดงาน'].sum():,}** รายการ")
+# 2. กรองข้อมูลเฉพาะ: ไม่ใช่เสาร์(5), ไม่ใช่อาทิตย์(6) และ ยอดงานต้องมากกว่า 0
+filtered_for_avg = trend_data_30[
+    (trend_data_30['day_of_week'] < 5) & 
+    (trend_data_30['ยอดงาน'] > 0)
+]
 
+# 3. คำนวณค่าเฉลี่ย
+if not filtered_for_avg.empty:
+    avg_performance = filtered_for_avg['ยอดงาน'].mean()
+    working_days_count = len(filtered_for_avg)
+else:
+    avg_performance = 0
+    working_days_count = 0
+    
+#st.caption(f"📊 รวมผลงาน 30 วันล่าสุด: **{trend_data_30['ยอดงาน'].sum():,}** รายการ")
+c1, c2, c3 = st.columns(3)
+c1.metric("📊 รวมผลงาน (30 วัน)", f"{trend_data_30['ยอดงาน'].sum():,} รายการ")
+c2.metric(" ค่าเฉลี่ย/วันทำการ", f"{avg_performance:.2f}", help="คำนวณเฉพาะจันทร์-ศุกร์ที่มีการส่งงาน")
+c3.metric("📅 จำนวนวันที่ทำงานจริง", f"{working_days_count} วัน", help="นับเฉพาะวันที่มียอดงานและไม่ใช่เสาร์-อาทิตย์")
+
+st.caption(f"💡 *หมายเหตุ: ค่าเฉลี่ยคำนวณจากยอดงานรวมหารด้วยจำนวนวันที่ส่งงานจริง (ไม่นับรวมวันเสาร์-อาทิตย์ และวันที่ไม่มีงาน)*")
 st.divider()
 
 left_col, right_col = st.columns([1, 1])
