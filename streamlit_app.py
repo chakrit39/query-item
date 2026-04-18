@@ -276,14 +276,14 @@ with right_col:
         
 st.divider()
 df_ = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
-left_col_, right_col_ = st.columns([1, 1])
+left_col_, cen_col_, right_col_ = st.columns([1, 1, 1])
     #total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
     #finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
 df_TYP = df_.groupby('SURV_TYP').size().reset_index(name='จำนวน')
 df_TYP = df_TYP.sort_values(by='จำนวน', ascending=False)
 df_TYP = df_TYP[df_TYP['SURV_TYP']!="                                                                                                                                                                                                      "]
 dynamic_height = 35 * (len(df_TYP) + 1)
-right_col_ .dataframe(df_TYP, use_container_width=True, hide_index=True,
+cen_col_ .dataframe(df_TYP, use_container_width=True, hide_index=True,
                     column_config={
                                     "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
                                     },
