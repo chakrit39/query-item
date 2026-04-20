@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime
 from google.oauth2 import service_account
 import plotly.express as px
+import pytz
 # --- 1. ตั้งค่าการเชื่อมต่อและ Scopes ---
 st.set_page_config(layout="wide", page_title="Performance Dashboard")
 
