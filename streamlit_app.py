@@ -516,7 +516,6 @@ def display_styled_dataframe_v2(df_display, title):
         height=dynamic_height
     )
     
-df_tor
 cc1, cc2 = st.columns([1, 1])
 
 with cc1:
