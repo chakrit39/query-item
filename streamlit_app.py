@@ -492,7 +492,7 @@ def display_styled_dataframe_v2(df_display, title):
         hide_index=True,
         height=dynamic_height
     )
-  
+st.dataframe(df_tor)
 res_name_l = summary_with_metrics_v2(display_df_l, 'NAME', df_tor, today, show_total=show_total_l)
 st.dataframe(res_name_l)
 display_styled_dataframe_v2(res_name_l, "📊 ยอดงานสะสมทั้งหมด")
