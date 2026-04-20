@@ -5,3 +5,5 @@ pyarrow
 google-auth
 db-dtypes
 plotly
+google-cloud-bigquery-storage
+pyarrow
