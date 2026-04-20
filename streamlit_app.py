@@ -86,7 +86,7 @@ def display_styled_dataframe(df_display, title):
             "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%,d ", alignment="center"),
             "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%,d ", alignment="center"),
         },
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
         height=dynamic_height #dynamic_height
     )
@@ -283,7 +283,7 @@ df_TYP = df_.groupby('SURV_TYP').size().reset_index(name='จำนวน')
 df_TYP = df_TYP.sort_values(by='จำนวน', ascending=False)
 df_TYP = df_TYP[df_TYP['SURV_TYP']!="                                                                                                                                                                                                      "]
 dynamic_height = 35 * (len(df_TYP) + 1)
-cen_col_ .dataframe(df_TYP, use_container_width=True, hide_index=True,
+cen_col_ .dataframe(df_TYP, width='stretch', hide_index=True,
                     column_config={
                                     "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
                                     },
@@ -294,7 +294,7 @@ df_IMG = df_.groupby('QUA_PIC').size().reset_index(name='จำนวน')
 df_IMG = df_IMG.sort_values(by='จำนวน', ascending=False)
 df_IMG = df_IMG[df_IMG['QUA_PIC']!="                                                                                                                                                                                                      "]
 dynamic_height = 35 * (len(df_IMG) + 1)
-right_col_ .dataframe(df_IMG, use_container_width=True, hide_index=True,
+right_col_ .dataframe(df_IMG, width='stretch', hide_index=True,
                     column_config={
                                     "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
                                     },
@@ -305,7 +305,7 @@ df_BUILD = df_.groupby('BUILD_FROM').size().reset_index(name='จำนวน')
 df_BUILD = df_BUILD.sort_values(by='จำนวน', ascending=False)
 df_BUILD = df_BUILD[df_BUILD['BUILD_FROM']!="                                                                                                                                                                                                      "]
 dynamic_height = 35 * (len(df_BUILD) + 1)
-left_col_.dataframe(df_BUILD, use_container_width=True, hide_index=True,
+left_col_.dataframe(df_BUILD, width='stretch', hide_index=True,
                      column_config={
                                     "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
                                     },
