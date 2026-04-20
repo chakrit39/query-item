@@ -341,7 +341,7 @@ left_col_.dataframe(df_BUILD, width='stretch', hide_index=True,
                                     },
                      height=dynamic_height
                    )
-    
+st.divider()    
 def calculate_tor_target(name, date_to_check, df_tor):
     person_row = df_tor[df_tor['NAME'] == name]
     if person_row.empty: 
@@ -429,13 +429,14 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
     summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
     
     # 2. คำนวณคอลัมน์ ผลงาน (TOR)
-    summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
+    
     
     if daily: 
         summary['มอบหมาย'] = 250
     
     # 3. คำนวณเป้าสะสม และ ความคืบหน้า
     if group_col == 'NAME':
+        summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
         summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, target_date, df_tor))
         summary['+/- เป้าหมาย'] = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
         summary['ความคืบหน้า (%)'] = (summary['ผลงาน (TOR)'] / summary['เป้าสะสม (TOR)']) * 100
@@ -492,9 +493,7 @@ def display_styled_dataframe_v2(df_display, title):
         hide_index=True,
         height=dynamic_height
     )
-st.dataframe(df_tor)
 res_name_l = summary_with_metrics_v2(display_df_l, 'NAME', df_tor, today, show_total=show_total_l)
-st.dataframe(res_name_l)
 display_styled_dataframe_v2(res_name_l, "📊 ยอดงานสะสมทั้งหมด")
 
 # ตารางแผ่นงาน (ไม่ต้องส่ง df_tor เพราะไม่ใช่คอลัมน์ NAME)
