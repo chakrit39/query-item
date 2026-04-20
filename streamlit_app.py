@@ -45,7 +45,7 @@ def summary_with_metrics(input_df, group_col, show_total=True, daily=False):
     summary = pd.merge(total_assigned, finished_tasks, on=group_col, how='left').fillna(0)
     summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
     if daily: 
-        summary['มอบหมาย'] = 144
+        summary['มอบหมาย'] = 250
     # คำนวณเปอร์เซ็นต์ (%)
     summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
     
