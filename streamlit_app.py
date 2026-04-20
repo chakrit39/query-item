@@ -611,4 +611,4 @@ def display_trend_chart_fixed(df_input):
     )
 
     st.plotly_chart(fig, width='stretch')
-display_trend_chart(df)
+display_trend_chart_fixed(df)
