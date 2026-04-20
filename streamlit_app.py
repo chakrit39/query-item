@@ -538,4 +538,60 @@ left_col_.dataframe(df_BUILD, width='stretch', hide_index=True,
                      height=dynamic_height
                    )
 st.divider()    
+import plotly.graph_objects as go
 
+def display_trend_chart(df_input):
+    """
+    df_input: DataFrame ที่มีคอลัมน์ DATE_SUBMIT (วันที่ทำงานสำเร็จ)
+    """
+    st.subheader("📈 แนวโน้มผลงานสะสมเทียบเป้าหมาย")
+    
+    # 1. เตรียมข้อมูลยอดสะสมรายวัน
+    # กรองเฉพาะแถวที่ทำเสร็จแล้ว และนับจำนวนแยกตามวัน
+    trend_df = df_input[df_input['DATE_SUBMIT'].notnull()].copy()
+    trend_df['DATE_SUBMIT'] = pd.to_datetime(trend_df['DATE_SUBMIT']).dt.date
+    
+    # นับจำนวนงานต่อวัน และคำนวณผลงานสะสม (x 0.5)
+    daily_count = trend_df.groupby('DATE_SUBMIT').size().reset_index(name='daily_done')
+    daily_count = daily_count.sort_values('DATE_SUBMIT')
+    
+    # คำนวณสะสม: (จำนวนงานแต่ละวัน * 0.5) แล้วหาผลรวมสะสม (cumsum)
+    daily_count['cumulative_perf'] = (daily_count['daily_done'] * 0.5).cumsum()
+    
+    # 2. สร้างกราฟด้วย Plotly
+    fig = go.Figure()
+
+    # เส้นยอดผลงานสะสมจริง
+    fig.add_trace(go.Scatter(
+        x=daily_count['DATE_SUBMIT'], 
+        y=daily_count['cumulative_perf'],
+        mode='lines+markers',
+        name='ผลงานสะสมจริง',
+        line=dict(color='#1f77b4', width=3),
+        hovertemplate='วันที่: %{x}<br>สะสม: %{y:,.1f} รายการ<extra></extra>'
+    ))
+
+    # เส้นเป้าหมาย (1,000,000)
+    target_value = 1000000
+    fig.add_trace(go.Scatter(
+        x=[daily_count['DATE_SUBMIT'].min(), daily_count['DATE_SUBMIT'].max()],
+        y=[target_value, target_value],
+        mode='lines',
+        name='เป้าหมาย (1M)',
+        line=dict(color='red', width=2, dash='dash'),
+        hovertemplate='เป้าหมาย: 1,000,000<extra></extra>'
+    ))
+
+    # ปรับแต่ง Layout
+    fig.update_layout(
+        hovermode="x unified",
+        xaxis_title="วันที่",
+        yaxis_title="จำนวนรายการสะสม",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=0, r=0, t=30, b=0),
+        height=400,
+        yaxis=dict(tickformat=",d") # ใส่คอมม่าที่แกน Y
+    )
+
+    st.plotly_chart(fig, width='stretch')
+display_trend_chart(df)
