@@ -316,3 +316,60 @@ left_col_.dataframe(df_BUILD, width='stretch', hide_index=True,
                                     },
                      height=dynamic_height
                    )
+
+@st.cache_data(ttl=43200)
+def get_tor_data():
+    info = st.secrets["gcp_service_account"]
+    credentials = service_account.Credentials.from_service_account_info(
+        info, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
+    )
+    service = build('sheets', 'v4', credentials=credentials)
+    
+    # *** เปลี่ยนเป็น ID ของ Google Sheets ของคุณ ***
+    SPREADSHEET_ID = '1_dyXM2SAJLINLW-wCEGPypAnNFzujAuTgK-1tBiy5Kg' 
+    RANGE_NAME = 'TOR_Targets!A:Z' # ดึงแบบเผื่อคอลัมน์ไปทางขวา
+    
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME).execute()
+    values = result.get('values', [])
+    
+    if not values:
+        return pd.DataFrame()
+    
+    df_tor = pd.DataFrame(values[1:], columns=values[0])
+    return df_tor
+def calculate_tor_target(name, date_to_check, df_tor):
+    person_row = df_tor[df_tor['NAME'] == name]
+    if person_row.empty: return 0
+    
+    row = person_row.iloc[0]
+    total_acc_target = 0
+    first_day_of_month = date_to_check.replace(day=1)
+    
+    # ชุด TOR ตามที่คุณเตรียม (TOR1, TOR2)
+    tor_configs = [
+        {'total': 'TOR1', 'start': 'STARTDATE_TOR1', 'end': 'ENDDATE_TOR1', 'rate': 'DAY_RATE_TOR1'},
+        {'total': 'TOR2', 'start': 'STARTDATE_TOR2', 'end': 'ENDDATE_TOR2', 'rate': 'DAY_RATE_TOR2'}
+    ]
+    
+    for tor in tor_configs:
+        try:
+            if tor['start'] not in row or pd.isna(row[tor['start']]) or row[tor['start']] == "": continue
+            
+            start_dt = pd.to_datetime(row[tor['start']]).date()
+            end_dt = pd.to_datetime(row[tor['end']]).date()
+            target_total = pd.to_numeric(str(row[tor['total']]).replace(',', ''))
+            day_rate = pd.to_numeric(row[tor['rate']])
+            
+            if end_dt < first_day_of_month:
+                total_acc_target += target_total
+            elif start_dt <= date_to_check:
+                actual_end = min(date_to_check, end_dt)
+                days_passed = np.busday_count(start_dt, (actual_end + pd.Timedelta(days=1)).date())
+                total_acc_target += min(days_passed * day_rate, target_total)
+        except: continue
+            
+    return int(total_acc_target)
+df_tor = get_tor_data()    
+summary = res_name_l.copy()
+summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, today, df_tor))
