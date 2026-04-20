@@ -431,7 +431,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
     if group_col == 'NAME':
         summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, target_date, df_tor))
         summary['+/- เป้าหมาย'] = summary['ดำเนินการแล้ว'] - summary['เป้าสะสม (TOR)']
-    summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'].sum()*0.5
+    
     summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
     summary = summary.sort_values(by='ดำเนินการแล้ว', ascending=False)
     
@@ -444,7 +444,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
         }
         if group_col == 'NAME':
             total_row['เป้าสะสม (TOR)'] = summary['เป้าสะสม (TOR)'].sum()
-            
+            total_row['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'].sum()*0.5
             total_row['+/- เป้าหมาย'] = summary['+/- เป้าหมาย'].sum()
         
         summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
