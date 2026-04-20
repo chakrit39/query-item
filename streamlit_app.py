@@ -119,6 +119,191 @@ def display_styled_dataframe(df_display, title):
         height=dynamic_height #dynamic_height
     )
     
+def calculate_tor_target(name, date_to_check, df_tor):
+    person_row = df_tor[df_tor['NAME'] == name]
+    if person_row.empty: 
+        return 0
+    
+    row = person_row.iloc[0]
+    total_acc_target = 0
+    
+    # กำหนดวันที่ 1 ของเดือนที่เลือกดู
+    first_day_of_selected_month = date_to_check.replace(day=1)
+    
+    tor_configs = [
+        {
+            'total': 'TOR1', 'start': 'STARTDATE_TOR1', 'end': 'ENDDATE_TOR1', 
+            'd_rate': 'DAY_RATE_TOR1', 'm_rate': 'MONTH_RATE_TOR1'
+        },
+        {
+            'total': 'TOR2', 'start': 'STARTDATE_TOR2', 'end': 'ENDDATE_TOR2', 
+            'd_rate': 'DAY_RATE_TOR2', 'm_rate': 'MONTH_RATE_TOR2'
+        }
+    ]
+    
+    for tor in tor_configs:
+        try:
+            if pd.isna(row[tor['start']]) or str(row[tor['start']]).strip() == "":
+                if str(row[tor['total']]).strip() != "":
+                    total_acc_target += pd.to_numeric(str(row[tor['total']]).replace(',', ''))
+                continue
+                
+            start_dt = pd.to_datetime(row[tor['start']]).date()
+            end_dt = pd.to_datetime(row[tor['end']]).date()
+            target_total = pd.to_numeric(str(row[tor['total']]).replace(',', ''))
+            day_rate = pd.to_numeric(row[tor['d_rate']])
+            month_rate = pd.to_numeric(row[tor['m_rate']])
+
+            # --- กรณีที่ 1: สัญญาจบไปแล้วก่อนเดือนที่เลือกดู (เช่น ดูเดือนเมษา แต่ TOR1 จบมีนา) ---
+            if end_dt < date_to_check:
+                total_acc_target += target_total
+
+            # --- กรณีที่ 2: สัญญาปัจจุบัน (เริ่มไปแล้วและยังไม่จบ หรือกำลังดำเนินการในเดือนที่เลือก) ---
+            elif start_dt <= date_to_check :
+                temp_tor_acc = 0
+                
+                # 2.1 คำนวณเดือนที่ผ่านมาแล้วใน TOR นี้ (Full Months)
+                # เริ่มเช็คตั้งแต่เดือนที่เริ่มสัญญา จนถึงเดือนก่อนหน้าเดือนปัจจุบัน
+                check_month = start_dt.replace(day=1)
+                while check_month < first_day_of_selected_month:
+                    # ถ้าเดือนแรกเริ่มไม่ใช่วันที่ 1 ให้คิดรายวันของเดือนแรก
+                    if check_month == start_dt.replace(day=1) and start_dt.day > 1:
+                        last_day_of_first_month = (pd.to_datetime(start_dt) + pd.offsets.MonthEnd(0)).date()
+                        days_in_first_month = np.busday_count(start_dt, (last_day_of_first_month + pd.Timedelta(days=1)).date())
+                        temp_tor_acc += (days_in_first_month * day_rate)
+                    else:
+                        # เดือนปกติที่ทำเต็มเดือน
+                        temp_tor_acc += month_rate
+                    
+                    # ขยับไปเดือนถัดไป
+                    check_month = (pd.to_datetime(check_month) + pd.offsets.MonthBegin(1)).date()
+
+                # 2.2 คำนวณวันทำงานของ "เดือนปัจจุบัน" (Current Month)
+                # เริ่มนับจากวันที่ 1 ของเดือน (หรือวันเริ่มสัญญาถ้าเริ่มเดือนนี้) จนถึงวันที่เลือกดู
+                count_start = max(start_dt, first_day_of_selected_month)
+                if count_start <= date_to_check:
+                    # หากวันที่เลือกดูเลยวันจบสัญญา ให้หยุดนับที่วันจบ
+                    count_end = min(date_to_check, end_dt)
+                    days_this_month = np.busday_count(count_start, 
+                                                        (pd.to_datetime(count_end) + pd.Timedelta(days=1)).date()
+                                                    )
+                    #days_this_month = np.busday_count(count_start, (count_end + pd.Timedelta(days=1)).date())
+                    temp_tor_acc += (days_this_month * day_rate)
+                
+                # รวมยอด TOR นี้เข้ากับยอดสะสมทั้งหมด (แต่ไม่เกินยอดรวมของ TOR นั้น)
+                total_acc_target += min(temp_tor_acc, target_total)
+                
+        except Exception as e:
+            continue
+            
+    return int(total_acc_target)
+    
+def format_status(val):
+    icon = "🟢" if val >= 0 else "🔴"
+    #label = "(ตามเป้า)" if val >= 0 else "(ต่ำกว่าเป้า)"
+    label = ""
+    # ถ้าเป็นบวก ให้ใส่เครื่องหมาย + นำหน้า
+    sign = "+" if val > 0 else "" 
+    return f"{icon} {sign}{val:,.1f} {label}"   
+    
+def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total=True, daily=False):
+    # 1. นับจำนวนงานพื้นฐาน
+    total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
+    finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
+    summary = pd.merge(total_assigned, finished_tasks, on=group_col, how='left').fillna(0)
+    summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
+    
+    
+    # 3. คำนวณเป้าสะสม และ ความคืบหน้า
+    if group_col == 'NAME':
+        summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
+        if daily:
+            def get_daily_rate(name):
+                p_row = df_tor[df_tor['NAME'] == name]
+                if p_row.empty: return 0
+                row = p_row.iloc[0]
+                
+                for i in ['1', '2']:
+                    # แก้ไข: ตรวจสอบว่าเป็น NaT หรือค่าว่างก่อนเปรียบเทียบ
+                    raw_start = row.get(f'STARTDATE_TOR{i}')
+                    raw_end = row.get(f'ENDDATE_TOR{i}')
+                    
+                    if pd.notna(raw_start) and pd.notna(raw_end) and str(raw_start).strip() != "" and str(raw_end).strip() != "":
+                        try:
+                            start = pd.to_datetime(raw_start).date()
+                            end = pd.to_datetime(raw_end).date()
+                            # ตรวจสอบช่วงวันที่
+                            if start <= target_date <= end:
+                                return pd.to_numeric(str(row[f'DAY_RATE_TOR{i}']).replace(',', ''))
+                        except:
+                            continue
+                return 0
+                
+            # --- [โหมดรายวัน] เป้าสะสม = Day Rate ของ TOR ที่ Active ในวันนั้น ---
+            summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(get_daily_rate)
+            # ถ้าไม่มี Day Rate (คนนอกเป้า) ให้ใช้ 0 หรือค่าที่ต้องการ (เช่น ค่าเฉลี่ยกลาง)
+            summary['เป้าสะสม (TOR)'] = summary['เป้าสะสม (TOR)'].fillna(0)
+            
+            # จัดการคอลัมน์สำหรับรายวัน (เอา 'มอบหมาย' ออก)
+            cols = [group_col, 'ดำเนินการแล้ว', 'เป้าสะสม (TOR)', 'ผลงาน (TOR)', '+/- เป้าหมาย', 'ความคืบหน้า (%)']
+        else:
+            # --- [โหมดสะสมปกติ] ---
+            summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, target_date, df_tor))
+            cols = [group_col, 'มอบหมาย', 'ดำเนินการแล้ว', 'เป้าสะสม (TOR)', 'ผลงาน (TOR)', '+/- เป้าหมาย', 'ความคืบหน้า (%)']
+        diff_val = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
+        summary['+/- เป้าหมาย'] = diff_val.apply(format_status)
+        #summary['+/- เป้าหมาย'] = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
+        summary['ความคืบหน้า (%)'] = (summary['ผลงาน (TOR)'] / summary['เป้าสะสม (TOR)']) * 100
+        summary = summary[cols]
+    else:
+        summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
+
+    summary['ความคืบหน้า (%)'] = summary['ความคืบหน้า (%)'].replace([np.inf, -np.inf], 0).fillna(0)
+    
+    # เรียงลำดับตามความขยัน (ดำเนินการแล้ว) จากมากไปน้อย
+    summary = summary.sort_values(by='ดำเนินการแล้ว', ascending=False)
+    
+    # 4. เพิ่มแถวผลรวม (Total)
+    if show_total:
+        total_row = {group_col: '--- รวมทั้งหมด ---', 'ดำเนินการแล้ว': summary['ดำเนินการแล้ว'].sum()}
+        
+        if not (group_col == 'NAME' and daily):
+            total_row['มอบหมาย'] = summary['มอบหมาย'].sum()
+        
+        if group_col == 'NAME':
+            t_target = summary['เป้าสะสม (TOR)'].sum()
+            t_perf = summary['ผลงาน (TOR)'].sum()
+            total_row['เป้าสะสม (TOR)'] = t_target
+            total_row['ผลงาน (TOR)'] = t_perf
+            total_row['+/- เป้าหมาย'] = format_status(t_perf - t_target)
+            #total_row['+/- เป้าหมาย'] = t_perf - t_target
+            total_row['ความคืบหน้า (%)'] = (t_perf / t_target * 100) if t_target > 0 else 0
+        else:
+            total_row['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0
+        
+        summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
+    return summary
+
+def display_styled_dataframe_v2(df_display, title):
+    st.subheader(title)
+    dynamic_height = 35 * (len(df_display) + 1)
+    
+    st.dataframe(
+        df_display,
+        column_config={
+            "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100),
+            "ผลงาน (TOR)": st.column_config.NumberColumn("ผลงาน (TOR)", format="%,.1f", alignment="center"),
+            "เป้าสะสม (TOR)": st.column_config.NumberColumn("เป้าหมาย (TOR)", format="%,d", alignment="center"),
+            "+/- เป้าหมาย": st.column_config.TextColumn("สถานะ/ส่วนต่าง", alignment="center"),
+            #"+/- เป้าหมาย": st.column_config.NumberColumn("+/- เป้าหมาย", format="%,.1f", alignment="center"),
+            "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%,d", alignment="center"),
+            "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%,d", alignment="center"),
+        },
+        width='stretch',
+        hide_index=True,
+        height=dynamic_height
+    )
+    
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามผลงานขึ้นรูปแปลง")
 
@@ -228,9 +413,10 @@ with left_col:
     
     # ตารางรายคน (ส่ง show_total เข้าไป)
     #st.subheader("👨‍💼 สรุปรายบุคคล")
-    res_name_l = summary_with_metrics(display_df_l, 'NAME', show_total=show_total_l)
-    display_styled_dataframe(res_name_l, "👨‍💼 สรุปรายบุคคล")
-    
+    #res_name_l = summary_with_metrics(display_df_l, 'NAME', show_total=show_total_l)
+    #display_styled_dataframe(res_name_l, "👨‍💼 สรุปรายบุคคล")
+    res_name_l = summary_with_metrics_v2(display_df_l, 'NAME', df_tor, today, show_total=show_total_l)
+    display_styled_dataframe_v2(res_name_l, "👨‍💼 สรุปรายบุคคลด")
     # Progress Bar ภาพรวมฝั่งซ้าย
     total_pct_l = res_name_l.iloc[-1]['ความคืบหน้า (%)']
     st.write(f"**ความคืบหน้าภาพรวมสะสม:** {total_pct_l:.2f}%")
@@ -240,9 +426,10 @@ with left_col:
 
     # ตารางรายแผ่นงาน
     #st.subheader("📂 สรุปตามแผ่นงาน")
-    res_sheet_l = summary_with_metrics(display_df_l, 'sheet_name')
-    display_styled_dataframe(res_sheet_l, "📂 สรุปตามแผ่นงาน")
-
+    #res_sheet_l = summary_with_metrics(display_df_l, 'sheet_name')
+    #display_styled_dataframe(res_sheet_l, "📂 สรุปตามแผ่นงาน")
+    res_sheet_l = summary_with_metrics_v2(display_df_l, 'sheet_name', df_tor, today)
+    display_styled_dataframe_v2(res_sheet_l, "📂 สรุปตามแผ่นงาน")
 # --- [ฝั่งขวา: เฉพาะวันนี้] ---
 with right_col:
     
@@ -289,8 +476,10 @@ with right_col:
         
         # ตารางรายคน (วันนี้)
         #st.subheader("👨‍💼 สรุปรายบุคคล (วันนี้)")
-        res_name_r = summary_with_metrics(display_df_r, 'NAME', show_total=show_total_r, daily=True)
-        display_styled_dataframe(res_name_r, f"👨‍💼 สรุปรายบุคคลวันที่ {selected_date}")
+        #res_name_r = summary_with_metrics(display_df_r, 'NAME', show_total=show_total_r, daily=True)
+        #display_styled_dataframe(res_name_r, f"👨‍💼 สรุปรายบุคคลวันที่ {selected_date}")
+        res_name_r = summary_with_metrics_v2(display_df_r, 'NAME', df_tor, selected_date, show_total=show_total_r, daily=True)
+        display_styled_dataframe_v2(res_name_r, f"👨‍💼 สรุปรายบุคคลวันที่ {selected_date}")
         
         # Progress Bar ภาพรวมฝั่งขวา
         total_pct_r = res_name_r.iloc[-1]['ความคืบหน้า (%)']
@@ -301,8 +490,10 @@ with right_col:
 
         # ตารางรายแผ่นงาน (วันนี้)
         #st.subheader("📂 สรุปตามแผ่นงาน (วันนี้)")
-        res_sheet_r = summary_with_metrics(display_df_r, 'sheet_name')
-        display_styled_dataframe(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
+        #res_sheet_r = summary_with_metrics(display_df_r, 'sheet_name')
+        #display_styled_dataframe(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
+        res_sheet_r = summary_with_metrics_v2(display_df_r, 'sheet_name', df_tor, selected_date)
+        display_styled_dataframe_v2(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
         
 st.divider()
 df_ = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
@@ -342,209 +533,4 @@ left_col_.dataframe(df_BUILD, width='stretch', hide_index=True,
                      height=dynamic_height
                    )
 st.divider()    
-def calculate_tor_target(name, date_to_check, df_tor):
-    person_row = df_tor[df_tor['NAME'] == name]
-    if person_row.empty: 
-        return 0
-    
-    row = person_row.iloc[0]
-    total_acc_target = 0
-    
-    # กำหนดวันที่ 1 ของเดือนที่เลือกดู
-    first_day_of_selected_month = date_to_check.replace(day=1)
-    
-    tor_configs = [
-        {
-            'total': 'TOR1', 'start': 'STARTDATE_TOR1', 'end': 'ENDDATE_TOR1', 
-            'd_rate': 'DAY_RATE_TOR1', 'm_rate': 'MONTH_RATE_TOR1'
-        },
-        {
-            'total': 'TOR2', 'start': 'STARTDATE_TOR2', 'end': 'ENDDATE_TOR2', 
-            'd_rate': 'DAY_RATE_TOR2', 'm_rate': 'MONTH_RATE_TOR2'
-        }
-    ]
-    
-    for tor in tor_configs:
-        try:
-            if pd.isna(row[tor['start']]) or str(row[tor['start']]).strip() == "":
-                if str(row[tor['total']]).strip() != "":
-                    total_acc_target += pd.to_numeric(str(row[tor['total']]).replace(',', ''))
-                continue
-                
-            start_dt = pd.to_datetime(row[tor['start']]).date()
-            end_dt = pd.to_datetime(row[tor['end']]).date()
-            target_total = pd.to_numeric(str(row[tor['total']]).replace(',', ''))
-            day_rate = pd.to_numeric(row[tor['d_rate']])
-            month_rate = pd.to_numeric(row[tor['m_rate']])
 
-            # --- กรณีที่ 1: สัญญาจบไปแล้วก่อนเดือนที่เลือกดู (เช่น ดูเดือนเมษา แต่ TOR1 จบมีนา) ---
-            if end_dt < date_to_check:
-                total_acc_target += target_total
-
-            # --- กรณีที่ 2: สัญญาปัจจุบัน (เริ่มไปแล้วและยังไม่จบ หรือกำลังดำเนินการในเดือนที่เลือก) ---
-            elif start_dt <= date_to_check :
-                temp_tor_acc = 0
-                
-                # 2.1 คำนวณเดือนที่ผ่านมาแล้วใน TOR นี้ (Full Months)
-                # เริ่มเช็คตั้งแต่เดือนที่เริ่มสัญญา จนถึงเดือนก่อนหน้าเดือนปัจจุบัน
-                check_month = start_dt.replace(day=1)
-                while check_month < first_day_of_selected_month:
-                    # ถ้าเดือนแรกเริ่มไม่ใช่วันที่ 1 ให้คิดรายวันของเดือนแรก
-                    if check_month == start_dt.replace(day=1) and start_dt.day > 1:
-                        last_day_of_first_month = (pd.to_datetime(start_dt) + pd.offsets.MonthEnd(0)).date()
-                        days_in_first_month = np.busday_count(start_dt, (last_day_of_first_month + pd.Timedelta(days=1)).date())
-                        temp_tor_acc += (days_in_first_month * day_rate)
-                    else:
-                        # เดือนปกติที่ทำเต็มเดือน
-                        temp_tor_acc += month_rate
-                    
-                    # ขยับไปเดือนถัดไป
-                    check_month = (pd.to_datetime(check_month) + pd.offsets.MonthBegin(1)).date()
-
-                # 2.2 คำนวณวันทำงานของ "เดือนปัจจุบัน" (Current Month)
-                # เริ่มนับจากวันที่ 1 ของเดือน (หรือวันเริ่มสัญญาถ้าเริ่มเดือนนี้) จนถึงวันที่เลือกดู
-                count_start = max(start_dt, first_day_of_selected_month)
-                if count_start <= date_to_check:
-                    # หากวันที่เลือกดูเลยวันจบสัญญา ให้หยุดนับที่วันจบ
-                    count_end = min(date_to_check, end_dt)
-                    days_this_month = np.busday_count(count_start, 
-                                                        (pd.to_datetime(count_end) + pd.Timedelta(days=1)).date()
-                                                    )
-                    #days_this_month = np.busday_count(count_start, (count_end + pd.Timedelta(days=1)).date())
-                    temp_tor_acc += (days_this_month * day_rate)
-                
-                # รวมยอด TOR นี้เข้ากับยอดสะสมทั้งหมด (แต่ไม่เกินยอดรวมของ TOR นั้น)
-                total_acc_target += min(temp_tor_acc, target_total)
-                
-        except Exception as e:
-            continue
-            
-    return int(total_acc_target)
-    
-def format_status(val):
-    icon = "🟢" if val >= 0 else "🔴"
-    #label = "(ตามเป้า)" if val >= 0 else "(ต่ำกว่าเป้า)"
-    label = ""
-    # ถ้าเป็นบวก ให้ใส่เครื่องหมาย + นำหน้า
-    sign = "+" if val > 0 else "" 
-    return f"{icon} {sign}{val:,.1f} {label}"   
-def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total=True, daily=False):
-    # 1. นับจำนวนงานพื้นฐาน
-    total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
-    finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
-    summary = pd.merge(total_assigned, finished_tasks, on=group_col, how='left').fillna(0)
-    summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
-    
-    
-    # 3. คำนวณเป้าสะสม และ ความคืบหน้า
-    if group_col == 'NAME':
-        summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
-        if daily:
-            def get_daily_rate(name):
-                p_row = df_tor[df_tor['NAME'] == name]
-                if p_row.empty: return 0
-                row = p_row.iloc[0]
-                
-                for i in ['1', '2']:
-                    # แก้ไข: ตรวจสอบว่าเป็น NaT หรือค่าว่างก่อนเปรียบเทียบ
-                    raw_start = row.get(f'STARTDATE_TOR{i}')
-                    raw_end = row.get(f'ENDDATE_TOR{i}')
-                    
-                    if pd.notna(raw_start) and pd.notna(raw_end) and str(raw_start).strip() != "" and str(raw_end).strip() != "":
-                        try:
-                            start = pd.to_datetime(raw_start).date()
-                            end = pd.to_datetime(raw_end).date()
-                            # ตรวจสอบช่วงวันที่
-                            if start <= target_date <= end:
-                                return pd.to_numeric(str(row[f'DAY_RATE_TOR{i}']).replace(',', ''))
-                        except:
-                            continue
-                return 0
-                
-            # --- [โหมดรายวัน] เป้าสะสม = Day Rate ของ TOR ที่ Active ในวันนั้น ---
-            summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(get_daily_rate)
-            # ถ้าไม่มี Day Rate (คนนอกเป้า) ให้ใช้ 0 หรือค่าที่ต้องการ (เช่น ค่าเฉลี่ยกลาง)
-            summary['เป้าสะสม (TOR)'] = summary['เป้าสะสม (TOR)'].fillna(0)
-            
-            # จัดการคอลัมน์สำหรับรายวัน (เอา 'มอบหมาย' ออก)
-            cols = [group_col, 'ดำเนินการแล้ว', 'เป้าสะสม (TOR)', 'ผลงาน (TOR)', '+/- เป้าหมาย', 'ความคืบหน้า (%)']
-        else:
-            # --- [โหมดสะสมปกติ] ---
-            summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, target_date, df_tor))
-            cols = [group_col, 'มอบหมาย', 'ดำเนินการแล้ว', 'เป้าสะสม (TOR)', 'ผลงาน (TOR)', '+/- เป้าหมาย', 'ความคืบหน้า (%)']
-        diff_val = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
-        summary['+/- เป้าหมาย'] = diff_val.apply(format_status)
-        #summary['+/- เป้าหมาย'] = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
-        summary['ความคืบหน้า (%)'] = (summary['ผลงาน (TOR)'] / summary['เป้าสะสม (TOR)']) * 100
-        summary = summary[cols]
-    else:
-        summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
-
-    summary['ความคืบหน้า (%)'] = summary['ความคืบหน้า (%)'].replace([np.inf, -np.inf], 0).fillna(0)
-    
-    # เรียงลำดับตามความขยัน (ดำเนินการแล้ว) จากมากไปน้อย
-    summary = summary.sort_values(by='ดำเนินการแล้ว', ascending=False)
-    
-    # 4. เพิ่มแถวผลรวม (Total)
-    if show_total:
-        total_row = {group_col: '--- รวมทั้งหมด ---', 'ดำเนินการแล้ว': summary['ดำเนินการแล้ว'].sum()}
-        
-        if not (group_col == 'NAME' and daily):
-            total_row['มอบหมาย'] = summary['มอบหมาย'].sum()
-        
-        if group_col == 'NAME':
-            t_target = summary['เป้าสะสม (TOR)'].sum()
-            t_perf = summary['ผลงาน (TOR)'].sum()
-            total_row['เป้าสะสม (TOR)'] = t_target
-            total_row['ผลงาน (TOR)'] = t_perf
-            total_row['+/- เป้าหมาย'] = format_status(t_perf - t_target)
-            #total_row['+/- เป้าหมาย'] = t_perf - t_target
-            total_row['ความคืบหน้า (%)'] = (t_perf / t_target * 100) if t_target > 0 else 0
-        else:
-            total_row['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0
-        
-        summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
-    return summary
-
-def display_styled_dataframe_v2(df_display, title):
-    st.subheader(title)
-    dynamic_height = 35 * (len(df_display) + 1)
-    
-    st.dataframe(
-        df_display,
-        column_config={
-            "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100),
-            "ผลงาน (TOR)": st.column_config.NumberColumn("ผลงาน (TOR)", format="%,.1f", alignment="center"),
-            "เป้าสะสม (TOR)": st.column_config.NumberColumn("เป้าหมาย (TOR)", format="%,d", alignment="center"),
-            "+/- เป้าหมาย": st.column_config.TextColumn("สถานะ/ส่วนต่าง", alignment="center"),
-            #"+/- เป้าหมาย": st.column_config.NumberColumn("+/- เป้าหมาย", format="%,.1f", alignment="center"),
-            "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%,d", alignment="center"),
-            "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%,d", alignment="center"),
-        },
-        width='stretch',
-        hide_index=True,
-        height=dynamic_height
-    )
-    
-cc1, cc2 = st.columns([1, 1])
-
-with cc1:
-    res_name_l = summary_with_metrics_v2(display_df_l, 'NAME', df_tor, today, show_total=show_total_l)
-    display_styled_dataframe_v2(res_name_l, "📊 ยอดงานสะสมทั้งหมด")
-    
-    # ตารางแผ่นงาน (ไม่ต้องส่ง df_tor เพราะไม่ใช่คอลัมน์ NAME)
-    res_sheet_l = summary_with_metrics_v2(display_df_l, 'sheet_name', df_tor, today)
-    display_styled_dataframe_v2(res_sheet_l, "📂 สรุปตามแผ่นงาน")
-with cc2:    
-    df_today = df[df['DATE_SUBMIT'] == selected_date]
-    display_df_r = df_today if selected_name == "แสดงทุกคน" else df_today[df_today['NAME'] == selected_name]
-    
-    if display_df_r.empty:
-        st.warning("⚠️ ไม่มีข้อมูลงานในวันนี้")
-    else:
-        show_total_r = (selected_name == "แสดงทุกคน")
-        res_name_r = summary_with_metrics_v2(display_df_r, 'NAME', df_tor, selected_date, show_total=show_total_r, daily=True)
-        display_styled_dataframe_v2(res_name_r, f"👨‍💼 สรุปรายบุคคลวันที่ {selected_date}")
-        
-        res_sheet_r = summary_with_metrics_v2(display_df_r, 'sheet_name', df_tor, selected_date)
-        display_styled_dataframe_v2(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
