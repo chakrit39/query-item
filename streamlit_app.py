@@ -413,7 +413,8 @@ def calculate_tor_target(name, date_to_check, df_tor):
                 
                 # รวมยอด TOR นี้เข้ากับยอดสะสมทั้งหมด (แต่ไม่เกินยอดรวมของ TOR นั้น)
                 total_acc_target += min(temp_tor_acc, target_total)
-
+            else:
+                total_acc_target += target_total
         except Exception as e:
             continue
             
