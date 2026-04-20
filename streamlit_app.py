@@ -488,7 +488,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
         
         summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
         
-
+    return summary
 # --- [แก้ไข] ปรับการแสดงผลตาราง ---
 def display_styled_dataframe_v2(df_display, title):
     st.subheader(title)
