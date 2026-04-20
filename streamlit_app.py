@@ -427,7 +427,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
     summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
     
     # 2. คำนวณคอลัมน์ ผลงาน (TOR)
-    summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
+    
     
     if daily: 
         summary['มอบหมาย'] = 250
@@ -435,6 +435,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
     # 3. คำนวณเป้าสะสม และ ความคืบหน้า
     if group_col == 'NAME':
         summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, target_date, df_tor))
+        summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
         summary['+/- เป้าหมาย'] = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
         summary['ความคืบหน้า (%)'] = (summary['ผลงาน (TOR)'] / summary['เป้าสะสม (TOR)']) * 100
         
