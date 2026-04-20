@@ -444,6 +444,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
         }
         if group_col == 'NAME':
             total_row['เป้าสะสม (TOR)'] = summary['เป้าสะสม (TOR)'].sum()
+            total_row['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว']*0.5
             total_row['+/- เป้าหมาย'] = summary['+/- เป้าหมาย'].sum()
         
         summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
@@ -458,7 +459,7 @@ def display_styled_dataframe_v2(df_display, title):
         df_display,
         column_config={
             "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100),
-            "เป้าสะสม (TOR)": st.column_config.NumberColumn("เป้าสะสม (TOR)", format="%,d", alignment="center"),
+            "เป้าสะสม (TOR)": st.column_config.NumberColumn("เป้าหมายสะสม (TOR)", format="%,d", alignment="center"),
             "+/- เป้าหมาย": st.column_config.NumberColumn("+/- เป้าหมาย", format="%,d", alignment="center"),
             "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%,d", alignment="center"),
             "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%,d", alignment="center"),
