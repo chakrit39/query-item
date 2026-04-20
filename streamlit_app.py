@@ -421,6 +421,33 @@ def calculate_tor_target(name, date_to_check, df_tor):
             
     return int(total_acc_target)
     
+def get_daily_rate(name):
+    p_row = df_tor[df_tor['NAME'] == name]
+    if p_row.empty: return 0
+    row = p_row.iloc[0]
+    
+    for i in ['1', '2']:
+        # แก้ไข: ตรวจสอบว่าเป็น NaT หรือค่าว่างก่อนเปรียบเทียบ
+        raw_start = row.get(f'STARTDATE_TOR{i}')
+        raw_end = row.get(f'ENDDATE_TOR{i}')
+        
+        if pd.notna(raw_start) and pd.notna(raw_end) and str(raw_start).strip() != "" and str(raw_end).strip() != "":
+            try:
+                start = pd.to_datetime(raw_start).date()
+                end = pd.to_datetime(raw_end).date()
+                # ตรวจสอบช่วงวันที่
+                if start <= target_date <= end:
+                    return pd.to_numeric(str(row[f'DAY_RATE_TOR{i}']).replace(',', ''))
+            except:
+                continue
+    return 0
+def format_status(val):
+    icon = "🟢" if val >= 0 else "🔴"
+    #label = "(ตามเป้า)" if val >= 0 else "(ต่ำกว่าเป้า)"
+    label = ""
+    # ถ้าเป็นบวก ให้ใส่เครื่องหมาย + นำหน้า
+    sign = "+" if val > 0 else "" 
+    return f"{icon} {sign}{val:,.1f} {label}"   
 def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total=True, daily=False):
     # 1. นับจำนวนงานพื้นฐาน
     total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
@@ -434,27 +461,6 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
         summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
         if daily:
             # --- [โหมดรายวัน] เป้าสะสม = Day Rate ของ TOR ที่ Active ในวันนั้น ---
-            def get_daily_rate(name):
-                p_row = df_tor[df_tor['NAME'] == name]
-                if p_row.empty: return 0
-                row = p_row.iloc[0]
-                
-                for i in ['1', '2']:
-                    # แก้ไข: ตรวจสอบว่าเป็น NaT หรือค่าว่างก่อนเปรียบเทียบ
-                    raw_start = row.get(f'STARTDATE_TOR{i}')
-                    raw_end = row.get(f'ENDDATE_TOR{i}')
-                    
-                    if pd.notna(raw_start) and pd.notna(raw_end) and str(raw_start).strip() != "" and str(raw_end).strip() != "":
-                        try:
-                            start = pd.to_datetime(raw_start).date()
-                            end = pd.to_datetime(raw_end).date()
-                            # ตรวจสอบช่วงวันที่
-                            if start <= target_date <= end:
-                                return pd.to_numeric(str(row[f'DAY_RATE_TOR{i}']).replace(',', ''))
-                        except:
-                            continue
-                return 0
-
             summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(get_daily_rate)
             
             # ถ้าไม่มี Day Rate (คนนอกเป้า) ให้ใช้ 0 หรือค่าที่ต้องการ (เช่น ค่าเฉลี่ยกลาง)
@@ -466,7 +472,9 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
             # --- [โหมดสะสมปกติ] ---
             summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, target_date, df_tor))
             cols = [group_col, 'มอบหมาย', 'ดำเนินการแล้ว', 'เป้าสะสม (TOR)', 'ผลงาน (TOR)', '+/- เป้าหมาย', 'ความคืบหน้า (%)']
-        summary['+/- เป้าหมาย'] = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
+        diff_val = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
+        summary['+/- เป้าหมาย'] = diff_val.apply(format_status)
+        #summary['+/- เป้าหมาย'] = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
         summary['ความคืบหน้า (%)'] = (summary['ผลงาน (TOR)'] / summary['เป้าสะสม (TOR)']) * 100
         summary = summary[cols]
     else:
@@ -489,7 +497,8 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
             t_perf = summary['ผลงาน (TOR)'].sum()
             total_row['เป้าสะสม (TOR)'] = t_target
             total_row['ผลงาน (TOR)'] = t_perf
-            total_row['+/- เป้าหมาย'] = t_perf - t_target
+            total_row['+/- เป้าหมาย'] = format_status(total_diff)
+            #total_row['+/- เป้าหมาย'] = t_perf - t_target
             total_row['ความคืบหน้า (%)'] = (t_perf / t_target * 100) if t_target > 0 else 0
         else:
             total_row['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0
@@ -507,7 +516,8 @@ def display_styled_dataframe_v2(df_display, title):
             "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100),
             "ผลงาน (TOR)": st.column_config.NumberColumn("ผลงาน (TOR)", format="%,.1f", alignment="center"),
             "เป้าสะสม (TOR)": st.column_config.NumberColumn("เป้าหมาย (TOR)", format="%,d", alignment="center"),
-            "+/- เป้าหมาย": st.column_config.NumberColumn("+/- เป้าหมาย", format="%,.1f", alignment="center"),
+            "+/- เป้าหมาย": st.column_config.TextColumn("สถานะ/ส่วนต่าง", alignment="center"),
+            #"+/- เป้าหมาย": st.column_config.NumberColumn("+/- เป้าหมาย", format="%,.1f", alignment="center"),
             "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%,d", alignment="center"),
             "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%,d", alignment="center"),
         },
