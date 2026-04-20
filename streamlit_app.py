@@ -439,12 +439,20 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
                 if p_row.empty: return 0
                 row = p_row.iloc[0]
                 
-                # เช็คว่าวันที่เลือก (target_date) อยู่ใน TOR ไหน
                 for i in ['1', '2']:
-                    start = pd.to_datetime(row[f'STARTDATE_TOR{i}']).date() if pd.notna(row[f'STARTDATE_TOR{i}']) else None
-                    end = pd.to_datetime(row[f'ENDDATE_TOR{i}']).date() if pd.notna(row[f'ENDDATE_TOR{i}']) else None
-                    if start and end and start <= target_date <= end:
-                        return pd.to_numeric(row[f'DAY_RATE_TOR{i}'])
+                    # แก้ไข: ตรวจสอบว่าเป็น NaT หรือค่าว่างก่อนเปรียบเทียบ
+                    raw_start = row.get(f'STARTDATE_TOR{i}')
+                    raw_end = row.get(f'ENDDATE_TOR{i}')
+                    
+                    if pd.notna(raw_start) and pd.notna(raw_end) and str(raw_start).strip() != "" and str(raw_end).strip() != "":
+                        try:
+                            start = pd.to_datetime(raw_start).date()
+                            end = pd.to_datetime(raw_end).date()
+                            # ตรวจสอบช่วงวันที่
+                            if start <= target_date <= end:
+                                return pd.to_numeric(str(row[f'DAY_RATE_TOR{i}']).replace(',', ''))
+                        except:
+                            continue
                 return 0
 
             summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(get_daily_rate)
@@ -487,9 +495,8 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
             total_row['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0
         
         summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
-        
     return summary
-# --- [แก้ไข] ปรับการแสดงผลตาราง ---
+
 def display_styled_dataframe_v2(df_display, title):
     st.subheader(title)
     dynamic_height = 35 * (len(df_display) + 1)
@@ -528,7 +535,7 @@ with cc2:
     else:
         show_total_r = (selected_name == "แสดงทุกคน")
         res_name_r = summary_with_metrics_v2(display_df_r, 'NAME', df_tor, selected_date, show_total=show_total_r, daily=True)
-        display_styled_dataframe_v2(res_name_r, f"👨‍💼 สรุปวันที่ {selected_date}")
+        display_styled_dataframe_v2(res_name_r, f"👨‍💼 สรุปรายบุคคลวันที่ {selected_date}")
         
         res_sheet_r = summary_with_metrics_v2(display_df_r, 'sheet_name', df_tor, selected_date)
         display_styled_dataframe_v2(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
