@@ -418,7 +418,7 @@ def calculate_tor_target(name, date_to_check, df_tor):
             continue
             
     return int(total_acc_target)
-# --- [แก้ไข] ปรับปรุงฟังก์ชัน summary เดิม ---
+    
 def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total=True, daily=False):
     # 1. นับจำนวนงานพื้นฐาน
     total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
@@ -426,30 +426,27 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
     summary = pd.merge(total_assigned, finished_tasks, on=group_col, how='left').fillna(0)
     summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
     
-    # 2. คำนวณคอลัมน์ใหม่: ผลงาน (TOR) = ดำเนินการแล้ว * 0.5
+    # 2. คำนวณคอลัมน์ ผลงาน (TOR)
     summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
     
     if daily: 
         summary['มอบหมาย'] = 250
     
-    # 3. คำนวณยอดเป้าสะสมรายคน และ ความคืบหน้าแบบใหม่
+    # 3. คำนวณเป้าสะสม และ ความคืบหน้า
     if group_col == 'NAME':
-        # ดึงเป้าหมายจากฟังก์ชัน calculate_tor_target ที่เราเขียนไว้
         summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, target_date, df_tor))
-        
-        # ส่วนต่างคิดจาก: ผลงานที่ถ่วงน้ำหนักแล้ว - เป้าสะสม
         summary['+/- เป้าหมาย'] = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
-        
-        # ความคืบหน้า (%) คิดจาก: ผลงาน (TOR) / เป้าสะสม (TOR)
         summary['ความคืบหน้า (%)'] = (summary['ผลงาน (TOR)'] / summary['เป้าสะสม (TOR)']) * 100
+        
+        # --- [จุดสำคัญ] เรียงลำดับคอลัมน์ใหม่ให้ 'เป้าสะสม' อยู่หน้า 'ผลงาน' ---
+        cols = [group_col, 'มอบหมาย', 'ดำเนินการแล้ว', 'เป้าสะสม (TOR)', 'ผลงาน (TOR)', '+/- เป้าหมาย', 'ความคืบหน้า (%)']
+        summary = summary[cols]
     else:
-        # สำหรับตารางอื่นๆ (เช่น รายแผ่นงาน) ให้คิดจากยอดมอบหมายปกติ
         summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
 
-    # จัดการค่า Infinity หรือ NaN กรณีเป้าหมายเป็น 0
     summary['ความคืบหน้า (%)'] = summary['ความคืบหน้า (%)'].replace([np.inf, -np.inf], 0).fillna(0)
     
-    # เรียงลำดับตามผลงาน
+    # เรียงลำดับตามความขยัน (ดำเนินการแล้ว) จากมากไปน้อย
     summary = summary.sort_values(by='ดำเนินการแล้ว', ascending=False)
     
     # 4. เพิ่มแถวผลรวม (Total)
@@ -463,11 +460,10 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
         
         if group_col == 'NAME':
             total_target = summary['เป้าสะสม (TOR)'].sum()
-            total_performance = summary['ผลงาน (TOR)'].sum()
-            
+            total_perf = summary['ผลงาน (TOR)'].sum()
             total_row['เป้าสะสม (TOR)'] = total_target
-            total_row['+/- เป้าหมาย'] = total_performance - total_target
-            total_row['ความคืบหน้า (%)'] = (total_performance / total_target * 100) if total_target > 0 else 0
+            total_row['+/- เป้าหมาย'] = total_perf - total_target
+            total_row['ความคืบหน้า (%)'] = (total_perf / total_target * 100) if total_target > 0 else 0
         else:
             total_row['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0
         
