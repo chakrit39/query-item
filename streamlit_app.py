@@ -497,7 +497,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
             t_perf = summary['ผลงาน (TOR)'].sum()
             total_row['เป้าสะสม (TOR)'] = t_target
             total_row['ผลงาน (TOR)'] = t_perf
-            total_row['+/- เป้าหมาย'] = format_status(total_diff)
+            total_row['+/- เป้าหมาย'] = format_status(t_perf - t_target)
             #total_row['+/- เป้าหมาย'] = t_perf - t_target
             total_row['ความคืบหน้า (%)'] = (t_perf / t_target * 100) if t_target > 0 else 0
         else:
