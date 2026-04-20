@@ -375,3 +375,4 @@ def calculate_tor_target(name, date_to_check, df_tor):
 df_tor = get_tor_data()    
 summary = res_name_l.copy()
 summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, today, df_tor))
+st.dataframe(summary)
