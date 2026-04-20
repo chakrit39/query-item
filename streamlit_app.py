@@ -24,12 +24,12 @@ def get_full_data():
     df['NAME'] = df['NAME'].fillna("ไม่ระบุชื่อ").astype(str) # เติมชื่อแทนค่าว่าง
     df = df[df['NAME']!="ไม่ระบุชื่อ"]
     df['sheet_name'] = df['sheet_name'].fillna("ไม่ระบุชีต").astype(str)
-    st.session_state['last_update'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    return df
+    
+    return df ,datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 # โหลดข้อมูล
 try:
-    df = get_full_data()
+    df,st.session_state['last_update'] = get_full_data()
     df['DATE_SUBMIT'] = pd.to_datetime(df['DATE_SUBMIT']).dt.date
     today = datetime.now().date()
 except Exception as e:
