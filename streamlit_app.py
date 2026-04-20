@@ -348,47 +348,70 @@ def calculate_tor_target(name, date_to_check, df_tor):
     row = person_row.iloc[0]
     total_acc_target = 0
     
-    # ชุด TOR ตามหัวคอลัมน์ของคุณ
     tor_configs = [
-        {'total': 'TOR1', 'start': 'STARTDATE_TOR1', 'end': 'ENDDATE_TOR1', 'rate': 'DAY_RATE_TOR1'},
-        {'total': 'TOR2', 'start': 'STARTDATE_TOR2', 'end': 'ENDDATE_TOR2', 'rate': 'DAY_RATE_TOR2'}
+        {
+            'total': 'TOR1', 'start': 'STARTDATE_TOR1', 'end': 'ENDDATE_TOR1', 
+            'd_rate': 'DAY_RATE_TOR1', 'm_rate': 'MONTH_RATE_TOR1'
+        },
+        {
+            'total': 'TOR2', 'start': 'STARTDATE_TOR2', 'end': 'ENDDATE_TOR2', 
+            'd_rate': 'DAY_RATE_TOR2', 'm_rate': 'MONTH_RATE_TOR2'
+        }
     ]
     
     for tor in tor_configs:
         try:
-            # 1. ตรวจสอบข้อมูลพื้นฐาน
-            if pd.isna(row[tor['start']]) or row[tor['start']] == "":
-                continue
+            if pd.isna(row[tor['start']]) or row[tor['start']] == "": continue
                 
             start_dt = pd.to_datetime(row[tor['start']]).date()
             end_dt = pd.to_datetime(row[tor['end']]).date()
             target_total = pd.to_numeric(str(row[tor['total']]).replace(',', ''))
-            day_rate = pd.to_numeric(row[tor['rate']])
+            day_rate = pd.to_numeric(row[tor['d_rate']])
+            month_rate = pd.to_numeric(row[tor['m_rate']])
 
-            # 2. Logic การสะสมเป้าหมาย
-            
-            # --- กรณีที่ ก: สัญญาจบไปแล้วก่อนวันที่เราดู (เช่น TOR1 จบไปแล้ว) ---
+            # 1. ถ้าวันที่เลือกดู เกินวันจบสัญญาไปแล้ว -> ยกยอดรวม TOR นั้นมาเลย
             if date_to_check > end_dt:
-                # ยกยอดมาทั้งก้อน (TOR1 = 8,580)
                 total_acc_target += target_total
 
-            # --- กรณีที่ ข: อยู่ในระหว่างสัญญา (เช่น ปัจจุบันกำลังทำ TOR2) ---
+            # 2. ถ้าวันที่เลือกดู อยู่ในช่วงสัญญานี้
             elif start_dt <= date_to_check <= end_dt:
-                # คำนวณวันทำงานจริง (จันทร์-ศุกร์) ตั้งแต่เริ่มสัญญา TOR นั้นๆ จนถึงวันที่เลือก
-                # np.busday_count จะนับจาก start_dt จริงๆ (ถ้าเริ่มวันที่ 15 ก็นับจาก 15)
-                days_passed = np.busday_count(start_dt, (date_to_check + pd.Timedelta(days=1)).date())
+                temp_acc = 0
                 
-                # เป้าสะสมของ TOR นี้ = วันที่ผ่านมาจริง * อัตราต่อวัน
-                current_tor_acc = days_passed * day_rate
+                # --- ส่วนคำนวณรายเดือน (Full Months) ---
+                # วนลูปนับเดือนที่ผ่านมาแล้วก่อนถึงเดือนปัจจุบัน
+                current_month_start = date_to_check.replace(day=1)
                 
-                # บวกเพิ่มเข้าไปในยอดรวม (ยอดสะสม TOR1 + ยอดรายวัน TOR2)
-                # ใช้ min เพื่อป้องกันกรณีวันทำงานในเดือนนั้นเกินยอดรวม TOR
-                total_acc_target += min(current_tor_acc, target_total)
+                # ถั้าสัญญาเริ่มก่อนเดือนปัจจุบัน
+                if start_dt < current_month_start:
+                    # หายอดเดือนที่ผ่านไปแล้ว (ตั้งแต่เดือนที่เริ่ม จนถึงเดือนก่อนหน้า)
+                    # กรณีเดือนแรกเริ่มไม่เต็มเดือน ให้คิดเป็นรายวันของเดือนนั้น
+                    
+                    # เช็คเดือนแรก (ถ้าเริ่มไม่วันที่ 1)
+                    if start_dt.day > 1:
+                        # นับวันทำงานที่เหลือของเดือนแรก
+                        last_day_of_first_month = (pd.to_datetime(start_dt) + pd.offsets.MonthEnd(0)).date()
+                        days_in_first_month = np.busday_count(start_dt, (last_day_of_first_month + pd.Timedelta(days=1)).date())
+                        temp_acc += (days_in_first_month * day_rate)
+                        
+                        # เลื่อนจุดเริ่มไปเดือนถัดไปวันที่ 1
+                        scan_dt = (pd.to_datetime(start_dt) + pd.offsets.MonthBegin(1)).date()
+                    else:
+                        scan_dt = start_dt
+                    
+                    # บวก MONTH_RATE สำหรับเดือนที่เต็มเดือน
+                    while scan_dt < current_month_start:
+                        temp_acc += month_rate
+                        scan_dt = (pd.to_datetime(scan_dt) + pd.offsets.MonthBegin(1)).date()
+                
+                # --- ส่วนคำนวณรายวัน (Current Month) ---
+                # นับวันทำงานในเดือนปัจจุบัน (จากวันที่ 1 หรือจากวันเริ่มสัญญา ถ้าเริ่มเดือนนี้)
+                counting_start = max(start_dt, current_month_start)
+                days_this_month = np.busday_count(counting_start, (date_to_check + pd.Timedelta(days=1)).date())
+                temp_acc += (days_this_month * day_rate)
 
-            # --- กรณีที่ ค: สัญญายังมาไม่ถึง ---
-            else:
-                continue
-                
+                # รวมยอดที่คำนวณได้ แต่ไม่เกินยอดรวม TOR
+                total_acc_target += min(temp_acc, target_total)
+
         except Exception as e:
             continue
             
