@@ -300,7 +300,7 @@ def display_styled_dataframe_v2(df_display, title):
             "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%,d", alignment="center"),
         },
         width='stretch',
-        hide_index=True,
+        #hide_index=True,
         height=dynamic_height
     )
     
