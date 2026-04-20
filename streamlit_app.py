@@ -428,21 +428,37 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
     summary = pd.merge(total_assigned, finished_tasks, on=group_col, how='left').fillna(0)
     summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
     
-    # 2. คำนวณคอลัมน์ ผลงาน (TOR)
-    
-    
-    if daily: 
-        summary['มอบหมาย'] = 250
     
     # 3. คำนวณเป้าสะสม และ ความคืบหน้า
     if group_col == 'NAME':
-        summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
-        summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, target_date, df_tor))
+        if daily:
+            # --- [โหมดรายวัน] เป้าสะสม = Day Rate ของ TOR ที่ Active ในวันนั้น ---
+            def get_daily_rate(name):
+                p_row = df_tor[df_tor['NAME'] == name]
+                if p_row.empty: return 0
+                row = p_row.iloc[0]
+                
+                # เช็คว่าวันที่เลือก (target_date) อยู่ใน TOR ไหน
+                for i in ['1', '2']:
+                    start = pd.to_datetime(row[f'STARTDATE_TOR{i}']).date() if pd.notna(row[f'STARTDATE_TOR{i}']) else None
+                    end = pd.to_datetime(row[f'ENDDATE_TOR{i}']).date() if pd.notna(row[f'ENDDATE_TOR{i}']) else None
+                    if start and end and start <= target_date <= end:
+                        return pd.to_numeric(row[f'DAY_RATE_TOR{i}'])
+                return 0
+
+            summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(get_daily_rate)
+            
+            # ถ้าไม่มี Day Rate (คนนอกเป้า) ให้ใช้ 0 หรือค่าที่ต้องการ (เช่น ค่าเฉลี่ยกลาง)
+            summary['เป้าสะสม (TOR)'] = summary['เป้าสะสม (TOR)'].fillna(0)
+            
+            # จัดการคอลัมน์สำหรับรายวัน (เอา 'มอบหมาย' ออก)
+            cols = [group_col, 'ดำเนินการแล้ว', 'เป้าสะสม (TOR)', 'ผลงาน (TOR)', '+/- เป้าหมาย', 'ความคืบหน้า (%)']
+        else:
+            # --- [โหมดสะสมปกติ] ---
+            summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, target_date, df_tor))
+            cols = [group_col, 'มอบหมาย', 'ดำเนินการแล้ว', 'เป้าสะสม (TOR)', 'ผลงาน (TOR)', '+/- เป้าหมาย', 'ความคืบหน้า (%)']
         summary['+/- เป้าหมาย'] = summary['ผลงาน (TOR)'] - summary['เป้าสะสม (TOR)']
         summary['ความคืบหน้า (%)'] = (summary['ผลงาน (TOR)'] / summary['เป้าสะสม (TOR)']) * 100
-        
-        # --- [จุดสำคัญ] เรียงลำดับคอลัมน์ใหม่ให้ 'เป้าสะสม' อยู่หน้า 'ผลงาน' ---
-        cols = [group_col, 'มอบหมาย', 'ดำเนินการแล้ว', 'เป้าสะสม (TOR)', 'ผลงาน (TOR)', '+/- เป้าหมาย', 'ความคืบหน้า (%)']
         summary = summary[cols]
     else:
         summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
@@ -454,25 +470,23 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
     
     # 4. เพิ่มแถวผลรวม (Total)
     if show_total:
-        total_row = {
-            group_col: '--- รวมทั้งหมด ---',
-            'มอบหมาย': summary['มอบหมาย'].sum(),
-            'ดำเนินการแล้ว': summary['ดำเนินการแล้ว'].sum(),
-        }
+        total_row = {group_col: '--- รวมทั้งหมด ---', 'ดำเนินการแล้ว': summary['ดำเนินการแล้ว'].sum()}
+        
+        if not (group_col == 'NAME' and daily):
+            total_row['มอบหมาย'] = summary['มอบหมาย'].sum()
         
         if group_col == 'NAME':
-            total_target = summary['เป้าสะสม (TOR)'].sum()
-            total_perf = summary['ผลงาน (TOR)'].sum()
-            total_row['เป้าสะสม (TOR)'] = total_target
-            total_row['ผลงาน (TOR)'] = total_perf
-            total_row['+/- เป้าหมาย'] = total_perf - total_target
-            total_row['ความคืบหน้า (%)'] = (total_perf / total_target * 100) if total_target > 0 else 0
+            t_target = summary['เป้าสะสม (TOR)'].sum()
+            t_perf = summary['ผลงาน (TOR)'].sum()
+            total_row['เป้าสะสม (TOR)'] = t_target
+            total_row['ผลงาน (TOR)'] = t_perf
+            total_row['+/- เป้าหมาย'] = t_perf - t_target
+            total_row['ความคืบหน้า (%)'] = (t_perf / t_target * 100) if t_target > 0 else 0
         else:
             total_row['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0
         
         summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
         
-    return summary
 
 # --- [แก้ไข] ปรับการแสดงผลตาราง ---
 def display_styled_dataframe_v2(df_display, title):
