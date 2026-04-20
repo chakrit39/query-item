@@ -375,11 +375,11 @@ def calculate_tor_target(name, date_to_check, df_tor):
             month_rate = pd.to_numeric(row[tor['m_rate']])
 
             # --- กรณีที่ 1: สัญญาจบไปแล้วก่อนเดือนที่เลือกดู (เช่น ดูเดือนเมษา แต่ TOR1 จบมีนา) ---
-            if end_dt < first_day_of_selected_month:
+            if end_dt < date_to_check:
                 total_acc_target += target_total
 
             # --- กรณีที่ 2: สัญญาปัจจุบัน (เริ่มไปแล้วและยังไม่จบ หรือกำลังดำเนินการในเดือนที่เลือก) ---
-            elif start_dt <= date_to_check:
+            elif start_dt <= date_to_check :
                 temp_tor_acc = 0
                 
                 # 2.1 คำนวณเดือนที่ผ่านมาแล้วใน TOR นี้ (Full Months)
@@ -416,6 +416,6 @@ def calculate_tor_target(name, date_to_check, df_tor):
     return int(total_acc_target)
     
 df_tor = get_tor_data()    
-summary = res_name_l.copy()
+summary = res_name_l
 summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, today, df_tor))
 st.dataframe(summary)
