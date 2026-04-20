@@ -444,7 +444,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
         }
         if group_col == 'NAME':
             total_row['เป้าสะสม (TOR)'] = summary['เป้าสะสม (TOR)'].sum()
-            total_row['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว']*0.5
+            total_row['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'].sum()*0.5
             total_row['+/- เป้าหมาย'] = summary['+/- เป้าหมาย'].sum()
         
         summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
