@@ -483,9 +483,9 @@ def display_styled_dataframe_v2(df_display, title):
         df_display,
         column_config={
             "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100),
-            "ผลงาน (TOR)": st.column_config.NumberColumn("ผลงาน (TOR)", format="%.1f", alignment="center"),
+            "ผลงาน (TOR)": st.column_config.NumberColumn("ผลงาน (TOR)", format="%,.1f", alignment="center"),
             "เป้าสะสม (TOR)": st.column_config.NumberColumn("เป้าหมายสะสม (TOR)", format="%,d", alignment="center"),
-            "+/- เป้าหมาย": st.column_config.NumberColumn("+/- เป้าหมาย", format="%.1f", alignment="center"),
+            "+/- เป้าหมาย": st.column_config.NumberColumn("+/- เป้าหมาย", format="%,.1f", alignment="center"),
             "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%,d", alignment="center"),
             "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%,d", alignment="center"),
         },
