@@ -342,13 +342,13 @@ def get_tor_data():
     return df_tor
 def calculate_tor_target(name, date_to_check, df_tor):
     person_row = df_tor[df_tor['NAME'] == name]
-    if person_row.empty: return 0
+    if person_row.empty: 
+        return 0
     
     row = person_row.iloc[0]
     total_acc_target = 0
-    first_day_of_month = date_to_check.replace(day=1)
     
-    # ชุด TOR ตามที่คุณเตรียม (TOR1, TOR2)
+    # ชุด TOR ตามหัวคอลัมน์ของคุณ
     tor_configs = [
         {'total': 'TOR1', 'start': 'STARTDATE_TOR1', 'end': 'ENDDATE_TOR1', 'rate': 'DAY_RATE_TOR1'},
         {'total': 'TOR2', 'start': 'STARTDATE_TOR2', 'end': 'ENDDATE_TOR2', 'rate': 'DAY_RATE_TOR2'}
@@ -356,20 +356,41 @@ def calculate_tor_target(name, date_to_check, df_tor):
     
     for tor in tor_configs:
         try:
-            if tor['start'] not in row or pd.isna(row[tor['start']]) or row[tor['start']] == "": continue
-            
+            # 1. ตรวจสอบข้อมูลพื้นฐาน
+            if pd.isna(row[tor['start']]) or row[tor['start']] == "":
+                continue
+                
             start_dt = pd.to_datetime(row[tor['start']]).date()
             end_dt = pd.to_datetime(row[tor['end']]).date()
             target_total = pd.to_numeric(str(row[tor['total']]).replace(',', ''))
             day_rate = pd.to_numeric(row[tor['rate']])
+
+            # 2. Logic การสะสมเป้าหมาย
             
-            if end_dt < first_day_of_month:
+            # --- กรณีที่ ก: สัญญาจบไปแล้วก่อนวันที่เราดู (เช่น TOR1 จบไปแล้ว) ---
+            if date_to_check > end_dt:
+                # ยกยอดมาทั้งก้อน (TOR1 = 8,580)
                 total_acc_target += target_total
-            elif start_dt <= date_to_check:
-                actual_end = min(date_to_check, end_dt)
-                days_passed = np.busday_count(start_dt, (actual_end + pd.Timedelta(days=1)).date())
-                total_acc_target += min(days_passed * day_rate, target_total)
-        except: continue
+
+            # --- กรณีที่ ข: อยู่ในระหว่างสัญญา (เช่น ปัจจุบันกำลังทำ TOR2) ---
+            elif start_dt <= date_to_check <= end_dt:
+                # คำนวณวันทำงานจริง (จันทร์-ศุกร์) ตั้งแต่เริ่มสัญญา TOR นั้นๆ จนถึงวันที่เลือก
+                # np.busday_count จะนับจาก start_dt จริงๆ (ถ้าเริ่มวันที่ 15 ก็นับจาก 15)
+                days_passed = np.busday_count(start_dt, (date_to_check + pd.Timedelta(days=1)).date())
+                
+                # เป้าสะสมของ TOR นี้ = วันที่ผ่านมาจริง * อัตราต่อวัน
+                current_tor_acc = days_passed * day_rate
+                
+                # บวกเพิ่มเข้าไปในยอดรวม (ยอดสะสม TOR1 + ยอดรายวัน TOR2)
+                # ใช้ min เพื่อป้องกันกรณีวันทำงานในเดือนนั้นเกินยอดรวม TOR
+                total_acc_target += min(current_tor_acc, target_total)
+
+            # --- กรณีที่ ค: สัญญายังมาไม่ถึง ---
+            else:
+                continue
+                
+        except Exception as e:
+            continue
             
     return int(total_acc_target)
 df_tor = get_tor_data()    
