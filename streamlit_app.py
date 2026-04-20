@@ -368,6 +368,7 @@ def calculate_tor_target(name, date_to_check, df_tor):
         try:
             if pd.isna(row[tor['start']]) or str(row[tor['start']]).strip() == "":
                 total_acc_target += pd.to_numeric(str(row[tor['total']]).replace(',', ''))
+                continue
                 
             start_dt = pd.to_datetime(row[tor['start']]).date()
             end_dt = pd.to_datetime(row[tor['end']]).date()
