@@ -265,7 +265,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
         summary = summary.sort_values(by='ดำเนินการแล้ว', ascending=False)
     elif group_col == 'sheet_name':
         summary = summary.sort_values(by='sheet_name', ascending=True)
-    summary.index = summary.index + 1
+    
     # 4. เพิ่มแถวผลรวม (Total)
     if show_total:
         total_row = {group_col: '--- รวมทั้งหมด ---', 'ดำเนินการแล้ว': summary['ดำเนินการแล้ว'].sum()}
@@ -285,6 +285,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
             total_row['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0
         
         summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
+        summary.index = summary.index + 1
     return summary
 
 def display_styled_dataframe_v2(df_display, title):
