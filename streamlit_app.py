@@ -491,7 +491,7 @@ def display_styled_dataframe_v2(df_display, title):
         height=min(dynamic_height, 500)
     )
   
-res_name_l = summary_with_metrics_v2(display_df_l, 'NAME', df_tor, today, show_total=show_total_l)
+res_name_l = summary_with_metrics_v2(display_df_l, 'NAME', df_tor, today, show_total=False)
 display_styled_dataframe_v2(res_name_l, "👨‍💼 สรุปรายบุคคล")
     
 # ตารางแผ่นงาน (ไม่ต้องส่ง df_tor เพราะไม่ใช่คอลัมน์ NAME)
