@@ -431,6 +431,7 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
     
     # 3. คำนวณเป้าสะสม และ ความคืบหน้า
     if group_col == 'NAME':
+        summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
         if daily:
             # --- [โหมดรายวัน] เป้าสะสม = Day Rate ของ TOR ที่ Active ในวันนั้น ---
             def get_daily_rate(name):
