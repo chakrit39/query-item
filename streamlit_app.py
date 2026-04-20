@@ -539,58 +539,75 @@ left_col_.dataframe(df_BUILD, width='stretch', hide_index=True,
                    )
 st.divider()    
 import plotly.graph_objects as go
-
-def display_trend_chart(df_input):
-    """
-    df_input: DataFrame ที่มีคอลัมน์ DATE_SUBMIT (วันที่ทำงานสำเร็จ)
-    """
-    st.subheader("📈 แนวโน้มผลงานสะสมเทียบเป้าหมาย")
+def display_trend_chart_fixed(df_input):
+    st.subheader("📈 แนวโน้มผลงานสะสม (1 ต.ค. 68 - 30 ก.ย. 69)")
     
-    # 1. เตรียมข้อมูลยอดสะสมรายวัน
-    # กรองเฉพาะแถวที่ทำเสร็จแล้ว และนับจำนวนแยกตามวัน
+    # 1. กำหนดช่วงเวลาที่ต้องการ (ปีงบประมาณ 2569)
+    start_period = pd.to_datetime('2025-10-01').date()
+    end_period = pd.to_datetime('2026-09-30').date()
+    
+    # สร้างโครงวันที่ทั้งหมดในช่วงนี้
+    all_dates = pd.date_range(start=start_period, end=end_period).date
+    base_df = pd.DataFrame({'DATE_SUBMIT': all_dates})
+    
+    # 2. เตรียมข้อมูลจริง
     trend_df = df_input[df_input['DATE_SUBMIT'].notnull()].copy()
     trend_df['DATE_SUBMIT'] = pd.to_datetime(trend_df['DATE_SUBMIT']).dt.date
     
-    # นับจำนวนงานต่อวัน และคำนวณผลงานสะสม (x 0.5)
+    # นับจำนวนงานต่อวัน
     daily_count = trend_df.groupby('DATE_SUBMIT').size().reset_index(name='daily_done')
-    daily_count = daily_count.sort_values('DATE_SUBMIT')
     
-    # คำนวณสะสม: (จำนวนงานแต่ละวัน * 0.5) แล้วหาผลรวมสะสม (cumsum)
-    daily_count['cumulative_perf'] = (daily_count['daily_done'] * 0.5).cumsum()
+    # 3. Merge ข้อมูลจริงเข้ากับโครงวันที่ (เพื่อให้กราฟแสดงครบทุกวัน)
+    merged_df = pd.merge(base_df, daily_count, on='DATE_SUBMIT', how='left').fillna(0)
+    merged_df = merged_df.sort_values('DATE_SUBMIT')
     
-    # 2. สร้างกราฟด้วย Plotly
+    # คำนวณสะสม (งานที่ทำเสร็จ * 0.5)
+    merged_df['cumulative_perf'] = (merged_df['daily_done'] * 0.5).cumsum()
+    
+    # กรองเฉพาะถึง "วันปัจจุบัน" เพื่อไม่ให้เส้นจริงลากเป็นเส้นตรงไปในอนาคต
+    today = pd.Timestamp.now().date()
+    plot_df = merged_df[merged_df['DATE_SUBMIT'] <= today].copy()
+
+    # 4. สร้างกราฟ
     fig = go.Figure()
 
-    # เส้นยอดผลงานสะสมจริง
-    fig.add_trace(go.Scatter(
-        x=daily_count['DATE_SUBMIT'], 
-        y=daily_count['cumulative_perf'],
-        mode='lines+markers',
-        name='ผลงานสะสมจริง',
-        line=dict(color='#1f77b4', width=3),
-        hovertemplate='วันที่: %{x}<br>สะสม: %{y:,.1f} รายการ<extra></extra>'
-    ))
-
-    # เส้นเป้าหมาย (1,000,000)
+    # เส้นเป้าหมาย 1,000,000 (ลากยาวตั้งแต่วันแรกถึงวันสุดท้าย)
     target_value = 1000000
     fig.add_trace(go.Scatter(
-        x=[daily_count['DATE_SUBMIT'].min(), daily_count['DATE_SUBMIT'].max()],
+        x=[start_period, end_period],
         y=[target_value, target_value],
         mode='lines',
         name='เป้าหมาย (1M)',
-        line=dict(color='red', width=2, dash='dash'),
+        line=dict(color='rgba(255, 0, 0, 0.5)', width=2, dash='dash'),
         hovertemplate='เป้าหมาย: 1,000,000<extra></extra>'
+    ))
+
+    # เส้นผลงานสะสมจริง
+    fig.add_trace(go.Scatter(
+        x=plot_df['DATE_SUBMIT'], 
+        y=plot_df['cumulative_perf'],
+        mode='lines',
+        name='ผลงานสะสมจริง',
+        line=dict(color='#00CC96', width=3),
+        fill='tozeroy', # ระบายสีใต้กราฟให้ดูสวยงาม
+        fillcolor='rgba(0, 204, 150, 0.1)',
+        hovertemplate='วันที่: %{x}<br>สะสม: %{y:,.1f}<extra></extra>'
     ))
 
     # ปรับแต่ง Layout
     fig.update_layout(
+        xaxis=dict(
+            range=[start_period, end_period], # บังคับแกน X เริ่ม-จบ ตามที่กำหนด
+            type='date'
+        ),
+        yaxis=dict(
+            range=[0, 1100000], # ปรับช่วงแกน Y ให้เห็นเส้น 1M ชัดเจน
+            tickformat=",d"
+        ),
         hovermode="x unified",
-        xaxis_title="วันที่",
-        yaxis_title="จำนวนรายการสะสม",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(l=0, r=0, t=30, b=0),
-        height=400,
-        yaxis=dict(tickformat=",d") # ใส่คอมม่าที่แกน Y
+        height=450
     )
 
     st.plotly_chart(fig, width='stretch')
