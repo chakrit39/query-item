@@ -458,7 +458,6 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
             group_col: '--- รวมทั้งหมด ---',
             'มอบหมาย': summary['มอบหมาย'].sum(),
             'ดำเนินการแล้ว': summary['ดำเนินการแล้ว'].sum(),
-            'ผลงาน (TOR)': summary['ผลงาน (TOR)'].sum(),
         }
         
         if group_col == 'NAME':
