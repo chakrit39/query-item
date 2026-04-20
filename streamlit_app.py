@@ -5,6 +5,8 @@ from datetime import datetime
 from google.oauth2 import service_account
 import plotly.express as px
 import pytz
+import numpy as np
+from googleapiclient.discovery import build
 # --- 1. ตั้งค่าการเชื่อมต่อและ Scopes ---
 st.set_page_config(layout="wide", page_title="Performance Dashboard")
 
