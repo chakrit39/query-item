@@ -367,7 +367,7 @@ def calculate_tor_target(name, date_to_check, df_tor):
     for tor in tor_configs:
         try:
             if pd.isna(row[tor['start']]) or str(row[tor['start']]).strip() == "":
-                if pd.notna(row[tor['total']]) or str(row[tor['total']]).strip() != "":
+                if str(row[tor['total']]).strip() != "":
                     total_acc_target += pd.to_numeric(str(row[tor['total']]).replace(',', ''))
                 continue
                 
