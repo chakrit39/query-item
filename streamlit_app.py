@@ -261,8 +261,10 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
     summary['ความคืบหน้า (%)'] = summary['ความคืบหน้า (%)'].replace([np.inf, -np.inf], 0).fillna(0)
     
     # เรียงลำดับตามความขยัน (ดำเนินการแล้ว) จากมากไปน้อย
-    summary = summary.sort_values(by='ดำเนินการแล้ว', ascending=False)
-    
+    if group_col == 'NAME':
+        summary = summary.sort_values(by='ดำเนินการแล้ว', ascending=False)
+    elif group_col == 'sheet_name':
+        summary = summary.sort_values(by='sheet_name', ascending=True)
     # 4. เพิ่มแถวผลรวม (Total)
     if show_total:
         total_row = {group_col: '--- รวมทั้งหมด ---', 'ดำเนินการแล้ว': summary['ดำเนินการแล้ว'].sum()}
