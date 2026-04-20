@@ -24,6 +24,7 @@ def get_full_data():
     df['NAME'] = df['NAME'].fillna("ไม่ระบุชื่อ").astype(str) # เติมชื่อแทนค่าว่าง
     df = df[df['NAME']!="ไม่ระบุชื่อ"]
     df['sheet_name'] = df['sheet_name'].fillna("ไม่ระบุชีต").astype(str)
+    st.session_state['last_update'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     return df
 
 # โหลดข้อมูล
@@ -93,7 +94,8 @@ def display_styled_dataframe(df_display, title):
     
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามผลงานขึ้นรูปแปลง")
-
+if 'last_update' in st.session_state:
+    st.caption(f"🕒 อัปเดตข้อมูลล่าสุดเมื่อ: {st.session_state['last_update']}")
 # สร้าง Dropdown กรองชื่อคน (Global หรือแยกฝั่ง)
 all_names = ["แสดงทุกคน"] + sorted(df['NAME'].dropna().astype(str).unique().tolist())
 
