@@ -404,7 +404,10 @@ def calculate_tor_target(name, date_to_check, df_tor):
                 if count_start <= date_to_check:
                     # หากวันที่เลือกดูเลยวันจบสัญญา ให้หยุดนับที่วันจบ
                     count_end = min(date_to_check, end_dt)
-                    days_this_month = np.busday_count(count_start, (count_end + pd.Timedelta(days=1)).date())
+                    days_this_month = np.busday_count(count_start, 
+                                                        (pd.to_datetime(count_end) + pd.Timedelta(days=1)).date()
+                                                    )
+                    #days_this_month = np.busday_count(count_start, (count_end + pd.Timedelta(days=1)).date())
                     temp_tor_acc += (days_this_month * day_rate)
                 
                 # รวมยอด TOR นี้เข้ากับยอดสะสมทั้งหมด (แต่ไม่เกินยอดรวมของ TOR นั้น)
