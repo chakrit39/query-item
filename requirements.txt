@@ -7,3 +7,4 @@ db-dtypes
 plotly
 google-cloud-bigquery-storage
 pyarrow
+pytz
