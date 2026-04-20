@@ -515,5 +515,5 @@ with cc2:
         res_name_r = summary_with_metrics_v2(display_df_r, 'NAME', df_tor, selected_date, show_total=show_total_r, daily=True)
         display_styled_dataframe_v2(res_name_r, f"👨‍💼 สรุปวันที่ {selected_date}")
         
-        res_sheet_r = summary_with_metrics_v2(display_df_r, 'sheet_name')
+        res_sheet_r = summary_with_metrics_v2(display_df_r, 'sheet_name', df_tor, selected_date)
         display_styled_dataframe_v2(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
