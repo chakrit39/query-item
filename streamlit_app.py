@@ -157,7 +157,7 @@ fig.update_layout(
 )
 
 # 5. แสดงกราฟ
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width='stretch')
 
 trend_data_30['DATE_SUBMIT'] = pd.to_datetime(trend_data_30['DATE_SUBMIT'])
 # 1. สร้างคอลัมน์ระบุวันในสัปดาห์ (0=จันทร์, 5=เสาร์, 6=อาทิตย์)
