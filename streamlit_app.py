@@ -94,7 +94,7 @@ def display_styled_dataframe(df_display, title):
     
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามผลงานขึ้นรูปแปลง")
-st.session_state
+
 if 'last_update' in st.session_state:
     st.caption(f"🕒 อัปเดตข้อมูลล่าสุดเมื่อ: {st.session_state['last_update']}")
 # สร้าง Dropdown กรองชื่อคน (Global หรือแยกฝั่ง)
