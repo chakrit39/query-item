@@ -421,26 +421,6 @@ def calculate_tor_target(name, date_to_check, df_tor):
             
     return int(total_acc_target)
     
-def get_daily_rate(name):
-    p_row = df_tor[df_tor['NAME'] == name]
-    if p_row.empty: return 0
-    row = p_row.iloc[0]
-    
-    for i in ['1', '2']:
-        # แก้ไข: ตรวจสอบว่าเป็น NaT หรือค่าว่างก่อนเปรียบเทียบ
-        raw_start = row.get(f'STARTDATE_TOR{i}')
-        raw_end = row.get(f'ENDDATE_TOR{i}')
-        
-        if pd.notna(raw_start) and pd.notna(raw_end) and str(raw_start).strip() != "" and str(raw_end).strip() != "":
-            try:
-                start = pd.to_datetime(raw_start).date()
-                end = pd.to_datetime(raw_end).date()
-                # ตรวจสอบช่วงวันที่
-                if start <= target_date <= end:
-                    return pd.to_numeric(str(row[f'DAY_RATE_TOR{i}']).replace(',', ''))
-            except:
-                continue
-    return 0
 def format_status(val):
     icon = "🟢" if val >= 0 else "🔴"
     #label = "(ตามเป้า)" if val >= 0 else "(ต่ำกว่าเป้า)"
@@ -460,9 +440,29 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
     if group_col == 'NAME':
         summary['ผลงาน (TOR)'] = summary['ดำเนินการแล้ว'] * 0.5
         if daily:
+            def get_daily_rate(name):
+                p_row = df_tor[df_tor['NAME'] == name]
+                if p_row.empty: return 0
+                row = p_row.iloc[0]
+                
+                for i in ['1', '2']:
+                    # แก้ไข: ตรวจสอบว่าเป็น NaT หรือค่าว่างก่อนเปรียบเทียบ
+                    raw_start = row.get(f'STARTDATE_TOR{i}')
+                    raw_end = row.get(f'ENDDATE_TOR{i}')
+                    
+                    if pd.notna(raw_start) and pd.notna(raw_end) and str(raw_start).strip() != "" and str(raw_end).strip() != "":
+                        try:
+                            start = pd.to_datetime(raw_start).date()
+                            end = pd.to_datetime(raw_end).date()
+                            # ตรวจสอบช่วงวันที่
+                            if start <= target_date <= end:
+                                return pd.to_numeric(str(row[f'DAY_RATE_TOR{i}']).replace(',', ''))
+                        except:
+                            continue
+                return 0
+                
             # --- [โหมดรายวัน] เป้าสะสม = Day Rate ของ TOR ที่ Active ในวันนั้น ---
             summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(get_daily_rate)
-            
             # ถ้าไม่มี Day Rate (คนนอกเป้า) ให้ใช้ 0 หรือค่าที่ต้องการ (เช่น ค่าเฉลี่ยกลาง)
             summary['เป้าสะสม (TOR)'] = summary['เป้าสะสม (TOR)'].fillna(0)
             
