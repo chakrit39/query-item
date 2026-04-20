@@ -10,6 +10,28 @@ from googleapiclient.discovery import build
 # --- 1. ตั้งค่าการเชื่อมต่อและ Scopes ---
 st.set_page_config(layout="wide", page_title="Performance Dashboard")
 
+@st.cache_data(ttl=43200)
+def get_tor_data():
+    info = st.secrets["gcp_service_account"]
+    credentials = service_account.Credentials.from_service_account_info(
+        info, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
+    )
+    service = build('sheets', 'v4', credentials=credentials)
+    
+    # *** เปลี่ยนเป็น ID ของ Google Sheets ของคุณ ***
+    SPREADSHEET_ID = '1_dyXM2SAJLINLW-wCEGPypAnNFzujAuTgK-1tBiy5Kg' 
+    RANGE_NAME = 'TOR_Targets!A:Z' # ดึงแบบเผื่อคอลัมน์ไปทางขวา
+    
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME).execute()
+    values = result.get('values', [])
+    
+    if not values:
+        return pd.DataFrame()
+    
+    df_tor = pd.DataFrame(values[1:], columns=values[0])
+    return df_tor
+    
 @st.cache_data(ttl=900)
 def get_full_data():
     # ดึงข้อมูลจาก Secrets (Streamlit Cloud)
@@ -36,6 +58,7 @@ try:
     df,st.session_state['last_update'] = get_full_data()
     df['DATE_SUBMIT'] = pd.to_datetime(df['DATE_SUBMIT']).dt.date
     today = datetime.now().date()
+    df_tor = get_tor_data()  
 except Exception as e:
     st.error(f"เกิดข้อผิดพลาดในการดึงข้อมูล: {e}")
     st.stop()
@@ -318,28 +341,6 @@ left_col_.dataframe(df_BUILD, width='stretch', hide_index=True,
                                     },
                      height=dynamic_height
                    )
-
-@st.cache_data(ttl=43200)
-def get_tor_data():
-    info = st.secrets["gcp_service_account"]
-    credentials = service_account.Credentials.from_service_account_info(
-        info, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
-    )
-    service = build('sheets', 'v4', credentials=credentials)
-    
-    # *** เปลี่ยนเป็น ID ของ Google Sheets ของคุณ ***
-    SPREADSHEET_ID = '1_dyXM2SAJLINLW-wCEGPypAnNFzujAuTgK-1tBiy5Kg' 
-    RANGE_NAME = 'TOR_Targets!A:Z' # ดึงแบบเผื่อคอลัมน์ไปทางขวา
-    
-    sheet = service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME).execute()
-    values = result.get('values', [])
-    
-    if not values:
-        return pd.DataFrame()
-    
-    df_tor = pd.DataFrame(values[1:], columns=values[0])
-    return df_tor
     
 def calculate_tor_target(name, date_to_check, df_tor):
     person_row = df_tor[df_tor['NAME'] == name]
@@ -417,8 +418,68 @@ def calculate_tor_target(name, date_to_check, df_tor):
             continue
             
     return int(total_acc_target)
+# --- [แก้ไข] ปรับปรุงฟังก์ชัน summary เดิม ---
+def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total=True, daily=False):
+    total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
+    finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
+    summary = pd.merge(total_assigned, finished_tasks, on=group_col, how='left').fillna(0)
+    summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
     
-df_tor = get_tor_data()    
-summary = res_name_l
-summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, today, df_tor))
-st.dataframe(summary)
+    if daily: summary['มอบหมาย'] = 250
+    
+    # คำนวณยอดเป้าสะสมรายคน
+    if group_col == 'NAME':
+        summary['เป้าสะสม (TOR)'] = summary['NAME'].apply(lambda x: calculate_tor_target(x, target_date, df_tor))
+        summary['+/- เป้าหมาย'] = summary['ดำเนินการแล้ว'] - summary['เป้าสะสม (TOR)']
+    
+    summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
+    summary = summary.sort_values(by='ดำเนินการแล้ว', ascending=False)
+    
+    if show_total:
+        total_row = {
+            group_col: '--- รวมทั้งหมด ---',
+            'มอบหมาย': summary['มอบหมาย'].sum(),
+            'ดำเนินการแล้ว': summary['ดำเนินการแล้ว'].sum(),
+            'ความคืบหน้า (%)': (summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0
+        }
+        if group_col == 'NAME':
+            total_row['เป้าสะสม (TOR)'] = summary['เป้าสะสม (TOR)'].sum()
+            total_row['+/- เป้าหมาย'] = summary['+/- เป้าหมาย'].sum()
+        
+        summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
+    return summary
+
+# --- [แก้ไข] ปรับการแสดงผลตาราง ---
+def display_styled_dataframe_v2(df_display, title):
+    st.subheader(title)
+    dynamic_height = 35 * (len(df_display) + 1)
+    
+    st.dataframe(
+        df_display,
+        column_config={
+            "ความคืบหน้า (%)": st.column_config.ProgressColumn("คืบหน้า", format="%.2f%%", min_value=0, max_value=100),
+            "เป้าสะสม (TOR)": st.column_config.NumberColumn("🎯 เป้าสะสม", format="%,d", alignment="center"),
+            "+/- เป้าหมาย": st.column_config.NumberColumn("⚖️ +/-", format="%,d", alignment="center"),
+            "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%,d", alignment="center"),
+            "ดำเนินการแล้ว": st.column_config.NumberColumn("ทำได้จริง", format="%,d", alignment="center"),
+        },
+        width='stretch',
+        hide_index=True,
+        height=min(dynamic_height, 500)
+    )
+  
+res_name_l = summary_with_metrics_v2(display_df_l, 'NAME', df_tor, today, show_total=show_total_l)
+display_styled_dataframe_v2(res_name_l, "👨‍💼 สรุปรายบุคคล")
+    
+# ตารางแผ่นงาน (ไม่ต้องส่ง df_tor เพราะไม่ใช่คอลัมน์ NAME)
+res_sheet_l = summary_with_metrics_v2(display_df_l, 'sheet_name', df_tor, today)
+display_styled_dataframe_v2(res_sheet_l, "📂 สรุปตามแผ่นงาน")
+df_today = df[df['DATE_SUBMIT'] == selected_date]
+display_df_r = df_today if selected_name == "แสดงทุกคน" else df_today[df_today['NAME'] == selected_name]
+
+if display_df_r.empty:
+    st.warning("⚠️ ไม่มีข้อมูลงานในวันนี้")
+else:
+    show_total_r = (selected_name == "แสดงทุกคน")
+    res_name_r = summary_with_metrics_v2(display_df_r, 'NAME', df_tor, selected_date, show_total=show_total_r, daily=True)
+    display_styled_dataframe_v2(res_name_r, f"👨‍💼 สรุปวันที่ {selected_date}")
