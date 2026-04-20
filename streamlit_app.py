@@ -488,12 +488,12 @@ def display_styled_dataframe_v2(df_display, title):
         },
         width='stretch',
         hide_index=True,
-        height=min(dynamic_height, 500)
+        height=dynamic_height
     )
   
 res_name_l = summary_with_metrics_v2(display_df_l, 'NAME', df_tor, today, show_total=False)
 display_styled_dataframe_v2(res_name_l, "👨‍💼 สรุปรายบุคคล")
-    
+"""
 # ตารางแผ่นงาน (ไม่ต้องส่ง df_tor เพราะไม่ใช่คอลัมน์ NAME)
 res_sheet_l = summary_with_metrics_v2(display_df_l, 'sheet_name', df_tor, today)
 display_styled_dataframe_v2(res_sheet_l, "📂 สรุปตามแผ่นงาน")
@@ -506,3 +506,4 @@ else:
     show_total_r = (selected_name == "แสดงทุกคน")
     res_name_r = summary_with_metrics_v2(display_df_r, 'NAME', df_tor, selected_date, show_total=show_total_r, daily=True)
     display_styled_dataframe_v2(res_name_r, f"👨‍💼 สรุปวันที่ {selected_date}")
+"""
