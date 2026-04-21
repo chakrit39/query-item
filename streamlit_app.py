@@ -8,6 +8,7 @@ import pytz
 import numpy as np
 from googleapiclient.discovery import build
 import datetime as datetime2
+import plotly.graph_objects as go
 # --- 1. ตั้งค่าการเชื่อมต่อและ Scopes ---
 st.set_page_config(layout="wide", page_title="Performance Dashboard")
 
@@ -405,6 +406,78 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         st.metric("📅 เวลาที่ใช้จริง", f"{active_hours_count} ชม.", 
                   help="นับเฉพาะชั่วโมงที่มีการส่งงาน")
 
+def display_trend_chart_fixed(df_input):
+    st.subheader("📈 แนวโน้มผลงานสะสม (1 ต.ค. 68 - 30 ก.ย. 69)")
+    
+    # 1. กำหนดช่วงเวลาที่ต้องการ (ปีงบประมาณ 2569)
+    start_period = pd.to_datetime('2025-10-01').date()
+    end_period = pd.to_datetime('2026-09-30').date()
+    
+    # สร้างโครงวันที่ทั้งหมดในช่วงนี้
+    all_dates = pd.date_range(start=start_period, end=end_period).date
+    base_df = pd.DataFrame({'DATE_SUBMIT': all_dates})
+    
+    # 2. เตรียมข้อมูลจริง
+    trend_df = df_input[df_input['DATE_SUBMIT'].notnull()].copy()
+    trend_df['DATE_SUBMIT'] = pd.to_datetime(trend_df['DATE_SUBMIT']).dt.date
+    
+    # นับจำนวนงานต่อวัน
+    daily_count = trend_df.groupby('DATE_SUBMIT').size().reset_index(name='daily_done')
+    
+    # 3. Merge ข้อมูลจริงเข้ากับโครงวันที่ (เพื่อให้กราฟแสดงครบทุกวัน)
+    merged_df = pd.merge(base_df, daily_count, on='DATE_SUBMIT', how='left').fillna(0)
+    merged_df = merged_df.sort_values('DATE_SUBMIT')
+    
+    # คำนวณสะสม (งานที่ทำเสร็จ * 0.5)
+    merged_df['cumulative_perf'] = (merged_df['daily_done'] * 0.5).cumsum()
+    
+    # กรองเฉพาะถึง "วันปัจจุบัน" เพื่อไม่ให้เส้นจริงลากเป็นเส้นตรงไปในอนาคต
+    today = pd.Timestamp.now().date()
+    plot_df = merged_df[merged_df['DATE_SUBMIT'] <= today].copy()
+
+    # 4. สร้างกราฟ
+    fig = go.Figure()
+
+    # เส้นเป้าหมาย 1,000,000 (ลากยาวตั้งแต่วันแรกถึงวันสุดท้าย)
+    target_value = 1000000
+    fig.add_trace(go.Scatter(
+        x=[start_period, end_period],
+        y=[target_value, target_value],
+        mode='lines',
+        name='เป้าหมาย (1M)',
+        line=dict(color='rgba(255, 0, 0, 0.5)', width=2, dash='dash'),
+        hovertemplate='เป้าหมาย: 1,000,000<extra></extra>'
+    ))
+
+    # เส้นผลงานสะสมจริง
+    fig.add_trace(go.Scatter(
+        x=plot_df['DATE_SUBMIT'], 
+        y=plot_df['cumulative_perf'],
+        mode='lines',
+        name='ผลงานสะสมจริง',
+        line=dict(color='#00CC96', width=3),
+        fill='tozeroy', # ระบายสีใต้กราฟให้ดูสวยงาม
+        fillcolor='rgba(0, 204, 150, 0.1)',
+        hovertemplate='วันที่: %{x}<br>สะสม: %{y:,.1f}<extra></extra>'
+    ))
+
+    # ปรับแต่ง Layout
+    fig.update_layout(
+        xaxis=dict(
+            range=[start_period, end_period], # บังคับแกน X เริ่ม-จบ ตามที่กำหนด
+            type='date'
+        ),
+        yaxis=dict(
+            range=[0, 1100000], # ปรับช่วงแกน Y ให้เห็นเส้น 1M ชัดเจน
+            tickformat=",d"
+        ),
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=0, r=0, t=30, b=0),
+        height=450
+    )
+
+    st.plotly_chart(fig, width='stretch')
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามผลงานขึ้นรูปแปลง")
 
@@ -635,83 +708,11 @@ if st.checkbox("แสดงข้อมูลประเภทงานที�
                                         },
                          height=dynamic_height
                        )
-st.divider()    
-import plotly.graph_objects as go
-def display_trend_chart_fixed(df_input):
-    st.subheader("📈 แนวโน้มผลงานสะสม (1 ต.ค. 68 - 30 ก.ย. 69)")
-    
-    # 1. กำหนดช่วงเวลาที่ต้องการ (ปีงบประมาณ 2569)
-    start_period = pd.to_datetime('2025-10-01').date()
-    end_period = pd.to_datetime('2026-09-30').date()
-    
-    # สร้างโครงวันที่ทั้งหมดในช่วงนี้
-    all_dates = pd.date_range(start=start_period, end=end_period).date
-    base_df = pd.DataFrame({'DATE_SUBMIT': all_dates})
-    
-    # 2. เตรียมข้อมูลจริง
-    trend_df = df_input[df_input['DATE_SUBMIT'].notnull()].copy()
-    trend_df['DATE_SUBMIT'] = pd.to_datetime(trend_df['DATE_SUBMIT']).dt.date
-    
-    # นับจำนวนงานต่อวัน
-    daily_count = trend_df.groupby('DATE_SUBMIT').size().reset_index(name='daily_done')
-    
-    # 3. Merge ข้อมูลจริงเข้ากับโครงวันที่ (เพื่อให้กราฟแสดงครบทุกวัน)
-    merged_df = pd.merge(base_df, daily_count, on='DATE_SUBMIT', how='left').fillna(0)
-    merged_df = merged_df.sort_values('DATE_SUBMIT')
-    
-    # คำนวณสะสม (งานที่ทำเสร็จ * 0.5)
-    merged_df['cumulative_perf'] = (merged_df['daily_done'] * 0.5).cumsum()
-    
-    # กรองเฉพาะถึง "วันปัจจุบัน" เพื่อไม่ให้เส้นจริงลากเป็นเส้นตรงไปในอนาคต
-    today = pd.Timestamp.now().date()
-    plot_df = merged_df[merged_df['DATE_SUBMIT'] <= today].copy()
-
-    # 4. สร้างกราฟ
-    fig = go.Figure()
-
-    # เส้นเป้าหมาย 1,000,000 (ลากยาวตั้งแต่วันแรกถึงวันสุดท้าย)
-    target_value = 1000000
-    fig.add_trace(go.Scatter(
-        x=[start_period, end_period],
-        y=[target_value, target_value],
-        mode='lines',
-        name='เป้าหมาย (1M)',
-        line=dict(color='rgba(255, 0, 0, 0.5)', width=2, dash='dash'),
-        hovertemplate='เป้าหมาย: 1,000,000<extra></extra>'
-    ))
-
-    # เส้นผลงานสะสมจริง
-    fig.add_trace(go.Scatter(
-        x=plot_df['DATE_SUBMIT'], 
-        y=plot_df['cumulative_perf'],
-        mode='lines',
-        name='ผลงานสะสมจริง',
-        line=dict(color='#00CC96', width=3),
-        fill='tozeroy', # ระบายสีใต้กราฟให้ดูสวยงาม
-        fillcolor='rgba(0, 204, 150, 0.1)',
-        hovertemplate='วันที่: %{x}<br>สะสม: %{y:,.1f}<extra></extra>'
-    ))
-
-    # ปรับแต่ง Layout
-    fig.update_layout(
-        xaxis=dict(
-            range=[start_period, end_period], # บังคับแกน X เริ่ม-จบ ตามที่กำหนด
-            type='date'
-        ),
-        yaxis=dict(
-            range=[0, 1100000], # ปรับช่วงแกน Y ให้เห็นเส้น 1M ชัดเจน
-            tickformat=",d"
-        ),
-        hovermode="x unified",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        margin=dict(l=0, r=0, t=30, b=0),
-        height=450
-    )
-
-    st.plotly_chart(fig, width='stretch')
-if st.checkbox("แสดงแนวโน้มผลงานสะสม"):
-    display_trend_chart_fixed(df)
-st.divider() 
+st.divider()   
 if st.checkbox("แสดงข้อมูลราย ชม."):
     df_timestamp = get_full_data_time()
     display_hourly_trend_chart(df_timestamp, selected_date, selected_name)
+
+st.divider() 
+if st.checkbox("แสดงแนวโน้มผลงานสะสม"):
+    display_trend_chart_fixed(df)
