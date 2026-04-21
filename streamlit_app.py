@@ -491,9 +491,6 @@ st.divider()
 col1, col2 = st.columns([0.2, 0.8])
 selected_name = col1.selectbox("🔍 ค้นหาชื่อคน:", all_names, key="trend_search")
 st.subheader("📈 แนวโน้มผลงานย้อนหลัง 30 วัน")
-import pandas as pd
-import plotly.graph_objects as go
-import streamlit as st
 
 # --- ส่วนของการเลือกช่วงเวลา ---
 time_option = st.selectbox("เลือกช่วงเวลาการแสดงผล", ["30 วันล่าสุด", "ทั้งหมด"])
@@ -503,20 +500,25 @@ df_trend = df.copy()
 if selected_name != "แสดงทุกคน":
     df_trend = df_trend[df_trend['NAME'] == selected_name]
 
-df_trend['DATE_SUBMIT'] = pd.to_datetime(df_trend['DATE_SUBMIT']).dt.date
+# แปลงเป็น datetime และดึงเฉพาะวันที่ (date)
+df_trend['DATE_DT'] = pd.to_datetime(df_trend['DATE_SUBMIT'])
+df_trend['DATE_ONLY'] = df_trend['DATE_DT'].dt.date # สร้างคอลัมน์ DATE_ONLY ให้ตรงกับที่เรียกใช้
 
 # หาช่วงวันที่
 today = pd.Timestamp.now().date()
 if time_option == "30 วันล่าสุด":
     date_range = pd.date_range(end=today, periods=30).date
 else:
-    # ถ้าเลือกทั้งหมด ให้เริ่มจากวันที่เก่าที่สุดที่มีในข้อมูลจนถึงวันนี้
-    start_date = df_trend['DATE_SUBMIT'].min() if not df_trend.empty else today
+    # แก้ไขตรงนี้: ใช้คอลัมน์ที่สร้างขึ้นใหม่ หรือใช้ DATE_DT.min().date()
+    if not df_trend.empty:
+        start_date = df_trend['DATE_ONLY'].min()
+    else:
+        start_date = today
     date_range = pd.date_range(start=start_date, end=today).date
 
 # Groupby และ Reindex
 trend_data = (
-    df_trend.groupby('DATE_SUBMIT')
+    df_trend.groupby('DATE_ONLY')
     .size()
     .reindex(date_range, fill_value=0)
     .reset_index()
