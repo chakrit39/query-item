@@ -488,9 +488,10 @@ all_names = ["แสดงทุกคน"] + sorted(df['NAME'].dropna().astype(
 
 # --- ส่วนคำนวณกราฟเส้น 30 วัน พร้อม Buffer ---
 st.divider()
-st.subheader("📈 แนวโน้มผลงานย้อนหลัง 30 วัน")
 col1, col2 = st.columns([0.2, 0.8])
 selected_name = col1.selectbox("🔍 ค้นหาชื่อคน:", all_names, key="trend_search")
+st.subheader("📈 แนวโน้มผลงานย้อนหลัง 30 วัน")
+
 
 # 1. เตรียมข้อมูล (30 วันล่าสุด)
 last_30_days = [today - pd.Timedelta(days=i) for i in range(30)]
