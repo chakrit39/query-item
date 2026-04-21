@@ -625,10 +625,11 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     })
     
     # --- [ส่วนที่เพิ่ม: จัดการกรณีวันปัจจุบัน] ---
-    now = datetime.datetime.now()
+    tz_thai = datetime.timezone(datetime.timedelta(hours=7))
+    now = datetime.datetime.now(tz_thai)
     current_date = now.date()
     current_hour = now.hour
-
+    
     # ถ้าวันที่เลือกคือวันนี้ ให้กรองโครงเวลาเอาเฉพาะชั่วโมงที่ไม่เกินเวลาปัจจุบัน
     if selected_date == current_date:
         # กรอง hourly_slots ให้แสดงถึงแค่ชั่วโมงปัจจุบัน (แต่ไม่เกิน 20:00)
