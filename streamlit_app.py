@@ -394,6 +394,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         height=400,
         margin=dict(l=0, r=20, t=20, b=0),
     )
+    fig.update_traces(cliponaxis=False)
     st.plotly_chart(fig, width='stretch')
         # --- แสดงผล Metric ---
     col1, col2, col3 = st.columns(3)
@@ -476,7 +477,7 @@ def display_trend_chart_fixed(df_input):
         margin=dict(l=0, r=0, t=30, b=0),
         height=450
     )
-
+    fig.update_traces(cliponaxis=False)
     st.plotly_chart(fig, width='stretch')
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามผลงานขึ้นรูปแปลง")
