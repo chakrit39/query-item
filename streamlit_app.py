@@ -612,7 +612,7 @@ with c1:
     st.metric(f"📊 ผลงานรวม", f"{total_sum:,.0f}", help=f"รวมยอดงานทั้งหมดในช่วง {label_suffix}")
 
 with c2:
-    st.metric(f"🎯 เฉลี่ย/วันทำการ", f"{avg_performance:,.2f}", 
+    st.metric(f"🎯 ยอดงานเฉลี่ย/วันทำการ", f"{avg_performance:,.2f}", 
               help="คำนวณเฉพาะวันจันทร์-ศุกร์ที่มีการส่งงานจริง (ไม่นับวันที่ยอดเป็น 0)")
 
 with c3:
