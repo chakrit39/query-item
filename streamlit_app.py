@@ -7,6 +7,7 @@ import plotly.express as px
 import pytz
 import numpy as np
 from googleapiclient.discovery import build
+import datetime as datetime2
 # --- 1. ตั้งค่าการเชื่อมต่อและ Scopes ---
 st.set_page_config(layout="wide", page_title="Performance Dashboard")
 
@@ -309,9 +310,10 @@ def display_styled_dataframe_v2(df_display, title):
     )
     
 def display_hourly_trend_chart(df_input, selected_date, selected_name):
+    
     # 1. จัดการเรื่อง Timezone +7
-    tz_thai = datetime.timezone(datetime.timedelta(hours=7))
-    now_thai = datetime.datetime.now(tz_thai)
+    tz_thai = datetime2.timezone(datetime2.timedelta(hours=7))
+    now_thai = datetime2.datetime.now(tz_thai)
     current_date = now_thai.date()
     current_hour = now_thai.hour
     
