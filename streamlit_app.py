@@ -308,6 +308,9 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     
     # คำนวณค่าเฉลี่ย (ถ้าไม่มีชั่วโมงที่ทำงานเลยให้เป็น 0 เพื่อกัน Error)
     avg_per_hour = total_now / active_hours_count if active_hours_count > 0 else 0
+    
+    max_val = plot_df['cumulative_perf'].max()
+    y_upper_limit = max_val * 1.30 if max_val > 0 else 300
 
     # 6. สร้างกราฟ
     st.subheader(f"📈 กราฟแนวโน้มรายชั่วโมง: {selected_name}")
@@ -324,7 +327,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
 
     fig.update_layout(
         xaxis=dict(type='category', categoryarray=full_hours, range=[0, len(full_hours) - 1]),
-        yaxis=dict(tickformat=",d"),
+        yaxis=dict(tickformat=",d", range=[0, y_upper_limit]),
         hovermode="x unified",
         height=400,
         margin=dict(l=0, r=20, t=20, b=0),
