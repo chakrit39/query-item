@@ -71,72 +71,7 @@ def get_full_data_time():
     df['NAME'] = df['NAME'].fillna("ไม่ระบุชื่อ").astype(str) # เติมชื่อแทนค่าว่าง
     df = df[df['NAME']!="ไม่ระบุชื่อ"]
     return df
-# โหลดข้อมูล
-try:
-    df,st.session_state['last_update'] = get_full_data()
-    df['DATE_SUBMIT'] = pd.to_datetime(df['DATE_SUBMIT']).dt.date
-    today = datetime.now().date()
-    df_tor = get_tor_data()  
-except Exception as e:
-    st.error(f"เกิดข้อผิดพลาดในการดึงข้อมูล: {e}")
-    st.stop()
 
-# --- 2. ฟังก์ชันคำนวณสรุปผลพร้อม Progress Bar ---
-def summary_with_metrics(input_df, group_col, show_total=True, daily=False):
-    # นับจำนวนงาน
-    total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
-    finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
-    
-    # รวมตาราง
-    summary = pd.merge(total_assigned, finished_tasks, on=group_col, how='left').fillna(0)
-    summary['ดำเนินการแล้ว'] = summary['ดำเนินการแล้ว'].astype(int)
-    if daily: 
-        summary['มอบหมาย'] = 250
-    # คำนวณเปอร์เซ็นต์ (%)
-    summary['ความคืบหน้า (%)'] = (summary['ดำเนินการแล้ว'] / summary['มอบหมาย']) * 100
-    
-    # --- เพิ่มการเรียงลำดับจากมากไปน้อยตามคอลัมน์ 'ดำเนินการแล้ว' ---
-    summary = summary.sort_values(by='ดำเนินการแล้ว', ascending=False)
-    
-    # เงื่อนไขการเพิ่มแถวผลรวม (Total)
-    if show_total:
-        total_row = pd.DataFrame({
-            group_col: ['--- รวมทั้งหมด ---'],
-            'มอบหมาย': [summary['มอบหมาย'].sum()],
-            'ดำเนินการแล้ว': [summary['ดำเนินการแล้ว'].sum()],
-            'ความคืบหน้า (%)': [(summary['ดำเนินการแล้ว'].sum() / summary['มอบหมาย'].sum() * 100) if summary['มอบหมาย'].sum() > 0 else 0]
-        })
-        return pd.concat([summary, total_row], ignore_index=True)
-    
-    return summary
-    
-def display_styled_dataframe(df_display, title):
-    st.subheader(title)
-    
-    # คำนวณความสูงให้พอดีกับจำนวนแถว
-    dynamic_height = 35 * (len(df_display) + 1)
-    # จำกัดความสูงไม่ให้เกิน 500px เพื่อความสวยงามถ้าข้อมูลเยอะ
-    container_height = min(dynamic_height, 500) 
-    
-    st.dataframe(
-        df_display,
-        column_config={
-            "ความคืบหน้า (%)": st.column_config.ProgressColumn(
-                "ความคืบหน้า (%)",
-                help="เปอร์เซ็นต์งานที่ดำเนินการแล้วเทียบกับงานที่ได้รับมอบหมาย",
-                format="%.2f%%",
-                min_value=0,
-                max_value=100,
-            ),
-            # จัดรูปแบบตัวเลขคอลัมน์อื่นๆ ให้ดูง่าย
-            "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%,d ", alignment="center"),
-            "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%,d ", alignment="center"),
-        },
-        width='stretch',
-        hide_index=True,
-        height=dynamic_height #dynamic_height
-    )
-    
 def calculate_tor_target(name, date_to_check, df_tor):
     person_row = df_tor[df_tor['NAME'] == name]
     if person_row.empty: 
@@ -479,6 +414,17 @@ def display_trend_chart_fixed(df_input):
     )
     fig.update_traces(cliponaxis=False)
     st.plotly_chart(fig, width='stretch')
+
+# โหลดข้อมูล
+try:
+    df,st.session_state['last_update'] = get_full_data()
+    df['DATE_SUBMIT'] = pd.to_datetime(df['DATE_SUBMIT']).dt.date
+    today = datetime.now().date()
+    df_tor = get_tor_data()  
+except Exception as e:
+    st.error(f"เกิดข้อผิดพลาดในการดึงข้อมูล: {e}")
+    st.stop()
+    
 # --- 3. การวาง Layout ---
 st.title("🚀 Dashboard ติดตามผลงานขึ้นรูปแปลง")
 
