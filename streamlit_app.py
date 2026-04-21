@@ -7,7 +7,6 @@ import plotly.express as px
 import pytz
 import numpy as np
 from googleapiclient.discovery import build
-import datetime
 # --- 1. ตั้งค่าการเชื่อมต่อและ Scopes ---
 st.set_page_config(layout="wide", page_title="Performance Dashboard")
 
