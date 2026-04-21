@@ -375,7 +375,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         yaxis=dict(tickformat=",d"),
         hovermode="x unified",
         height=400,
-        margin=dict(l=0, r=20, t=20, b=0),
+        #margin=dict(l=0, r=20, t=20, b=0),
     )
     st.plotly_chart(fig, width='stretch')
         # --- แสดงผล Metric ---
