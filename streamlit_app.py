@@ -365,7 +365,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         mode='lines+markers+text',
         text=plot_df['cumulative_perf'].apply(lambda x: f"{x:,.1f}" if x > 0 else ""),
         textposition="top center",
-        line=dict(color='#0068C9', width=4, shape='spline'),
+        line=dict(color='#0068C9', width=4, shape='linear'),
         fill='tozeroy', fillcolor='rgba(0, 104, 201, 0.1)',
         hovertemplate='เวลา %{x}<br>สะสม: %{y:,.1f}<extra></extra>'
     ))
@@ -375,7 +375,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         yaxis=dict(tickformat=",d"),
         hovermode="x unified",
         height=400,
-        #margin=dict(l=0, r=20, t=20, b=0),
+        margin=dict(l=0, r=20, t=20, b=0),
     )
     st.plotly_chart(fig, width='stretch')
         # --- แสดงผล Metric ---
