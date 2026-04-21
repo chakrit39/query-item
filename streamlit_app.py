@@ -501,7 +501,7 @@ df_last_30 = df if selected_name == "แสดงทุกคน" else df[df['NA
 trend_data_30 = (
     df_last_30.groupby('DATE_SUBMIT')
     .size()
-    .reindex(last_30_days, fill_value=0)
+    #.reindex(last_30_days, fill_value=0)
     .reset_index(name='ยอดงาน')
     .sort_values('DATE_SUBMIT')
 )
