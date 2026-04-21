@@ -695,5 +695,5 @@ def display_trend_chart_fixed(df_input):
 display_trend_chart_fixed(df)
 st.divider() 
 agree = st.checkbox("ดูข้อมูลราย ชม.")
-if agree:
+if 0:
     display_hourly_trend_chart(df, selected_date, selected_name)
