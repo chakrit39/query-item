@@ -350,7 +350,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     
     # 4. คำนวณยอดสะสมรายชั่วโมง
     if not day_data.empty:
-        day_data['HOUR'] = day_data['TIME_DT'].dt.strftime('%H:00')
+        day_data['HOUR'] = (day_data['TIME_DT']+pd.Timedelta(hours=1)).dt.strftime('%H:00')
         hourly_counts = day_data.groupby('HOUR').size().reset_index(name='hourly_done')
         merged_df = pd.merge(hourly_slots, hourly_counts, on='HOUR', how='left').fillna(0)
         merged_df['cumulative_perf'] = merged_df['hourly_done'].cumsum()
