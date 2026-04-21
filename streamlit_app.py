@@ -323,7 +323,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     ))
 
     fig.update_layout(
-        xaxis=dict(type='category', categoryarray=full_hours),
+        xaxis=dict(type='category', categoryarray=full_hours, range=[0, len(full_hours) - 1]),
         yaxis=dict(tickformat=",d"),
         hovermode="x unified",
         height=400,
