@@ -548,7 +548,7 @@ fig.add_trace(go.Scatter(
 # 4. ปรับแต่ง Layout ให้ล็อกความกว้าง 30 วัน
 fig.update_layout(
     xaxis=dict(
-        title="คลิกลากซ้าย-ขวา เพื่อดูข้อมูลย้อนหลัง",
+        #title="คลิกลากซ้าย-ขวา เพื่อดูข้อมูลย้อนหลัง",
         type='date',
         tickformat="%d %b",
         # --- ล็อกหน้าจอให้เห็น 30 วันพอดี ---
@@ -569,7 +569,7 @@ fig.update_layout(
     height=500,
     margin=dict(l=10, r=10, t=50, b=50)
 )
-
+fig.update_traces(cliponaxis=False)
 # 5. แสดงกราฟ
 st.plotly_chart(fig, width='stretch', config={
     'displayModeBar': True,
