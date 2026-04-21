@@ -362,7 +362,7 @@ def display_trend_chart_fixed(df_input):
     # 2. เตรียมข้อมูลจริง
     trend_df = df_input[df_input['DATE_SUBMIT'].notnull()].copy()
     trend_df['DATE_SUBMIT'] = pd.to_datetime(trend_df['DATE_SUBMIT']).dt.date
-    
+    total = len(trend_df)*0.5
     # นับจำนวนงานต่อวัน
     daily_count = trend_df.groupby('DATE_SUBMIT').size().reset_index(name='daily_done')
     
@@ -396,7 +396,7 @@ def display_trend_chart_fixed(df_input):
         x=plot_df['DATE_SUBMIT'], 
         y=plot_df['cumulative_perf'],
         mode='lines+text',
-        text=plot_df['cumulative_perf'].apply(lambda x: f"{x}" if x==plot_df['cumulative_perf'].max() else ""),
+        text=plot_df['cumulative_perf'].apply(lambda x: f"{total}" if x==plot_df['cumulative_perf'].max() else ""),
         textposition="top center",
         name='ผลงานสะสม',
         line=dict(color='#00CC96', width=3),
