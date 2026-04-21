@@ -511,7 +511,7 @@ if time_option == "30 วันล่าสุด":
 else:
     # แก้ไขตรงนี้: ใช้คอลัมน์ที่สร้างขึ้นใหม่ หรือใช้ DATE_DT.min().date()
     if not df_trend.empty:
-        start_date = df_trend['DATE_ONLY'].min()
+        start_date = df_trend['DATE_DT'].min().date()
     else:
         start_date = today
     date_range = pd.date_range(start=start_date, end=today).date
