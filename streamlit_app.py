@@ -336,7 +336,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         day_data['HOUR'] = day_data['TIME_DT'].dt.strftime('%H:00')
         hourly_counts = day_data.groupby('HOUR').size().reset_index(name='hourly_done')
         merged_df = pd.merge(hourly_slots, hourly_counts, on='HOUR', how='left').fillna(0)
-        merged_df['cumulative_perf'] = (merged_df['hourly_done'] * 0.5).cumsum()
+        merged_df['cumulative_perf'] = merged_df['hourly_done'].cumsum()
     else:
         merged_df = hourly_slots.copy()
         merged_df['cumulative_perf'] = 0.0
@@ -381,7 +381,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         # --- แสดงผล Metric ---
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("✨ ผลงานรวม (TOR)", f"{total_now:,.1f}")
+        st.metric("✨ ดำเนินการแล้ว", f"{total_now:,.1f}")
     with col2:
         st.metric("⏱️ เฉลี่ย/ชม. (ที่ทำจริง)", f"{avg_per_hour:,.2f}", 
                   help="หารเฉพาะชั่วโมงที่มียอดงานเพิ่มขึ้นเท่านั้น")
@@ -694,4 +694,6 @@ def display_trend_chart_fixed(df_input):
     st.plotly_chart(fig, width='stretch')
 display_trend_chart_fixed(df)
 st.divider() 
-display_hourly_trend_chart(df, selected_date, selected_name)
+agree = st.checkbox("ดูข้อมูลราย ชม.")
+if agree:
+    display_hourly_trend_chart(df, selected_date, selected_name)
