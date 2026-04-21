@@ -491,84 +491,134 @@ st.divider()
 col1, col2 = st.columns([0.2, 0.8])
 selected_name = col1.selectbox("🔍 ค้นหาชื่อคน:", all_names, key="trend_search")
 st.subheader("📈 แนวโน้มผลงานย้อนหลัง 30 วัน")
+import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
 
+# --- ส่วนของการเลือกช่วงเวลา ---
+time_option = st.selectbox("เลือกช่วงเวลาการแสดงผล", ["30 วันล่าสุด", "ทั้งหมด"])
 
-# 1. เตรียมข้อมูล (30 วันล่าสุด)
-last_30_days = [today - pd.Timedelta(days=i) for i in range(30)]
+# 1. เตรียมข้อมูล
+df_trend = df.copy()
+if selected_name != "แสดงทุกคน":
+    df_trend = df_trend[df_trend['NAME'] == selected_name]
 
-df_last_30 = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
-#df_last_30 = df_last_30[df_last_30['DATE_SUBMIT'].isin(last_30_days)]
-trend_data_30 = (
-    df_last_30.groupby('DATE_SUBMIT')
+df_trend['DATE_SUBMIT'] = pd.to_datetime(df_trend['DATE_SUBMIT']).dt.date
+
+# หาช่วงวันที่
+today = pd.Timestamp.now().date()
+if time_option == "30 วันล่าสุด":
+    date_range = pd.date_range(end=today, periods=30).date
+else:
+    # ถ้าเลือกทั้งหมด ให้เริ่มจากวันที่เก่าที่สุดที่มีในข้อมูลจนถึงวันนี้
+    start_date = df_trend['DATE_ONLY'].min() if not df_trend.empty else today
+    date_range = pd.date_range(start=start_date, end=today).date
+
+# Groupby และ Reindex
+trend_data = (
+    df_trend.groupby('DATE_SUBMIT')
     .size()
-    #.reindex(last_30_days, fill_value=0)
-    .reset_index(name='ยอดงาน')
-    .sort_values('DATE_SUBMIT')
+    .reindex(date_range, fill_value=0)
+    .reset_index()
 )
+trend_data.columns = ['DATE_SUBMIT', 'ยอดงาน']
 
-# 2. คำนวณหาค่าสูงสุด และเพิ่ม Buffer 20%
-max_val = trend_data_30['ยอดงาน'].max()
-y_upper_limit = max_val * 1.30 if max_val > 0 else 1000 # ถ้าค่าสูงสุดเป็น 0 ให้กันไว้ที่ 10
+# 2. คำนวณขอบเขตแกน Y
+max_val = trend_data['ยอดงาน'].max()
+y_upper_limit = max_val * 1.30 if max_val > 0 else 10
 
 # 3. สร้างกราฟ
-fig = px.line(
-    trend_data_30, 
-    x='DATE_SUBMIT', 
-    y='ยอดงาน',
-    text='ยอดงาน',
-    markers=True
-)
+fig = go.Figure()
 
-# 4. ปรับแต่งการแสดงผล
-fig.update_traces(
-    textposition="top center", 
-    line_color="#29b5e8",
-    marker=dict(size=8, symbol="circle"),
-    textfont=dict(size=10, color="white") # ปรับขนาด/สีตัวเลขบนกราฟ
-)
+fig.add_trace(go.Scatter(
+    x=trend_data['DATE_SUBMIT'],
+    y=trend_data['ยอดงาน'],
+    mode='lines+markers+text',
+    text=trend_data['ยอดงาน'].apply(lambda x: int(x) if x > 0 else ""),
+    textposition="top center",
+    line=dict(color="#29b5e8", width=3, shape='linear'),
+    marker=dict(size=8),
+    fill='tozeroy',
+    fillcolor='rgba(41, 181, 232, 0.1)',
+    name='ยอดงาน'
+))
 
+# 4. ปรับแต่ง Layout (ล็อกแกน และทำ Pan/Scroll)
 fig.update_layout(
     xaxis=dict(
-        title="วันที่",
+        title="วันที่ (เลื่อนแถบด้านล่างเพื่อดูวันอื่น)",
         type='date',
-        tickformat="%d %b", # แสดงเป็น "17 Apr"
-        dtick=86400000.0,    # บังคับแสดงทุกวัน (1 วัน = 86,400,000 ms)
-        tickangle=-90    # เอียงตัวอักษรเพื่อให้ไม่ซ้อนกัน
+        tickformat="%d %b",
+        # กำหนดให้เริ่มต้นแสดงแค่ 7 วันล่าสุด (เพื่อให้ช่องกว้างเท่ากัน)
+        range=[date_range[-7], date_range[-1]] if len(date_range) > 7 else None,
+        rangeslider=dict(visible=True, thickness=0.05), # แถบเลื่อนด้านล่าง
+        fixedrange=False, # ยอมให้เลื่อน (Pan) ได้
+        dtick="D1",
+        tickangle=-45
     ),
     yaxis=dict(
-        title="ยอดงาน",
-        range=[0, y_upper_limit] # ตั้งค่าขอบเขตแกน Y ให้สูงกว่าค่า max 20%
+        title="จำนวนงาน",
+        range=[0, y_upper_limit],
+        fixedrange=True # ล็อกแกน Y ไม่ให้ขยับ/ซูม
     ),
     hovermode="x unified",
-    height=500,
-    #margin=dict(l=20, r=20, t=40, b=20)
+    height=550,
+    dragmode=False # ปิดฟังก์ชันการลากเมาส์เพื่อซูม (Box Zoom)
 )
 
-# 5. แสดงกราฟ
-st.plotly_chart(fig, width='stretch')
+# 5. แสดงกราฟ และปิดปุ่มเครื่องมือ (Modebar)
+st.plotly_chart(fig, width='stretch', config={
+    'displayModeBar': False, # ปิดแถบเครื่องมือทั้งหมดเหนือชื่อกราฟ
+    'scrollZoom': False      # ปิดการใช้ลูกกลิ้งเมาส์ซูม
+})
+# --- ส่วนคำนวณ Metric (ต่อจากขั้นตอนเตรียม trend_data) ---
 
-trend_data_30['DATE_SUBMIT'] = pd.to_datetime(trend_data_30['DATE_SUBMIT'])
+# ตรวจสอบให้แน่ใจว่าเป็น datetime เพื่อใช้ฟังก์ชัน .dt
+trend_data['DATE_DT'] = pd.to_datetime(trend_data['DATE_SUBMIT'])
+
 # 1. สร้างคอลัมน์ระบุวันในสัปดาห์ (0=จันทร์, 5=เสาร์, 6=อาทิตย์)
-trend_data_30['day_of_week'] = trend_data_30['DATE_SUBMIT'].dt.dayofweek
-# 2. กรองข้อมูลเฉพาะ: ไม่ใช่เสาร์(5), ไม่ใช่อาทิตย์(6) และ ยอดงานต้องมากกว่า 0
-filtered_for_avg = trend_data_30[
-    (trend_data_30['day_of_week'] < 5) & 
-    (trend_data_30['ยอดงาน'] > 0)
+trend_data['day_of_week'] = trend_data['DATE_DT'].dt.dayofweek
+
+# 2. กรองข้อมูลสำหรับหาค่าเฉลี่ย:
+# เงื่อนไข: จันทร์-ศุกร์ (day_of_week < 5) และต้องมียอดงานมากกว่า 0
+filtered_for_avg = trend_data[
+    (trend_data['day_of_week'] < 5) & 
+    (trend_data['ยอดงาน'] > 0)
 ]
 
-# 3. คำนวณค่าเฉลี่ย
+# 3. คำนวณค่าทางสถิติ
 if not filtered_for_avg.empty:
     avg_performance = filtered_for_avg['ยอดงาน'].mean()
     working_days_count = len(filtered_for_avg)
+    max_day_record = filtered_for_avg['ยอดงาน'].max()
 else:
     avg_performance = 0
     working_days_count = 0
-    
-#st.caption(f"📊 รวมผลงาน 30 วันล่าสุด: **{trend_data_30['ยอดงาน'].sum():,}** รายการ")
+    max_day_record = 0
+
+# 4. แสดงผล Metric
+# ใช้คำอธิบายตามตัวเลือก Dropdown (time_option คือตัวแปรจากข้อที่แล้ว)
+label_suffix = f"({time_option})"
+
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("📊 รวมผลงาน (30 วัน)", f"{trend_data_30['ยอดงาน'].sum():,} รายการ")
-c2.metric("🎯 ค่าเฉลี่ย/วันทำการ", f"{avg_performance:.2f}", help="คำนวณเฉพาะจันทร์-ศุกร์ที่มีการส่งงาน")
-c3.metric("📅 จำนวนวันที่ทำงานจริง", f"{working_days_count} วัน", help="นับเฉพาะวันที่มียอดงานและไม่ใช่เสาร์-อาทิตย์")
+
+with c1:
+    total_sum = trend_data['ยอดงาน'].sum()
+    st.metric(f"📊 ผลงานรวม", f"{total_sum:,.0f}", help=f"รวมยอดงานทั้งหมดในช่วง {label_suffix}")
+
+with c2:
+    st.metric(f"🎯 เฉลี่ย/วันทำการ", f"{avg_performance:,.2f}", 
+              help="คำนวณเฉพาะวันจันทร์-ศุกร์ที่มีการส่งงานจริง (ไม่นับวันที่ยอดเป็น 0)")
+
+with c3:
+    st.metric(f"📅 วันที่ทำงานจริง", f"{working_days_count} วัน", 
+              help="นับเฉพาะวันธรรมดาที่มีการส่งงาน")
+
+with c4:
+    # เพิ่ม Metric พิเศษ: วันที่ทำได้สูงสุด
+    st.metric(f"🏆 High Score", f"{max_day_record:,.0f}", 
+              help="ยอดงานที่ทำได้สูงสุดต่อวัน (เฉพาะวันธรรมดา)")
+
 
 st.caption(f"💡 *หมายเหตุ: ค่าเฉลี่ยคำนวณจากยอดงานรวมหารด้วยจำนวนวันที่ส่งงานจริง (ไม่นับรวมวันเสาร์-อาทิตย์ และวันที่ไม่มีงาน)*")
 st.divider()
