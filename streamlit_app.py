@@ -494,7 +494,9 @@ st.subheader("📈 แนวโน้มผลงานย้อนหลัง 
 
 # --- ส่วนของการเลือกช่วงเวลา ---
 time_option = st.selectbox("เลือกช่วงเวลาการแสดงผล", ["30 วันล่าสุด", "ทั้งหมด"])
-
+# --- [ส่วนการเตรียมข้อมูล] ---
+# กำหนดจุดเริ่มแสดงผล (Start) และจุดสิ้นสุด (End) ให้ห่างกัน 30 วันเป๊ะๆ
+start_view_date = today - pd.Timedelta(days=29) # รวมวันนี้ด้วยเป็น 30 วัน
 # 1. เตรียมข้อมูล
 df_trend = df.copy()
 if selected_name != "แสดงทุกคน":
@@ -527,11 +529,10 @@ trend_data.columns = ['DATE_SUBMIT', 'ยอดงาน']
 
 # 2. คำนวณขอบเขตแกน Y
 max_val = trend_data['ยอดงาน'].max()
-y_upper_limit = max_val * 1.30 if max_val > 0 else 10
+y_upper_limit = max_val * 1.30 if max_val > 0 else 1000
 
 # 3. สร้างกราฟ
 fig = go.Figure()
-
 fig.add_trace(go.Scatter(
     x=trend_data['DATE_SUBMIT'],
     y=trend_data['ยอดงาน'],
@@ -541,39 +542,41 @@ fig.add_trace(go.Scatter(
     line=dict(color="#29b5e8", width=3, shape='linear'),
     marker=dict(size=8),
     fill='tozeroy',
-    fillcolor='rgba(41, 181, 232, 0.1)',
-    name='ยอดงาน'
+    fillcolor='rgba(41, 181, 232, 0.1)'
 ))
 
-# 4. ปรับแต่ง Layout (ล็อกแกน และทำ Pan/Scroll)
+# 4. ปรับแต่ง Layout ให้ล็อกความกว้าง 30 วัน
 fig.update_layout(
     xaxis=dict(
-        title="วันที่ (เลื่อนแถบด้านล่างเพื่อดูวันอื่น)",
+        title="คลิกลากซ้าย-ขวา เพื่อดูข้อมูลย้อนหลัง",
         type='date',
         tickformat="%d %b",
-        # กำหนดให้เริ่มต้นแสดงแค่ 7 วันล่าสุด (เพื่อให้ช่องกว้างเท่ากัน)
-        range=[date_range[-30], date_range[-1]] if len(date_range) > 30 else None,
-        rangeslider=dict(visible=True, thickness=0.05), # แถบเลื่อนด้านล่าง
-        fixedrange=False, # ยอมให้เลื่อน (Pan) ได้
-        dtick="D1",
-        tickangle=-45
+        # --- ล็อกหน้าจอให้เห็น 30 วันพอดี ---
+        range=[start_view_date, today], 
+        fixedrange=False, # ยอมให้เลื่อน (Pan) ได้ แต่ความกว้างจะคงที่
+        dtick="D1",       # แสดงขีดทุกๆ 1 วัน
+        tickangle=-45,
+        showgrid=True,
+        gridcolor='rgba(200, 200, 200, 0.1)'
     ),
     yaxis=dict(
         title="จำนวนงาน",
         range=[0, y_upper_limit],
-        fixedrange=True # ล็อกแกน Y ไม่ให้ขยับ/ซูม
+        fixedrange=True   # ล็อกแกน Y นิ่งสนิท
     ),
+    dragmode='pan',       # ใช้เมาส์คลิกลากเลื่อนซ้าย-ขวา
     hovermode="x unified",
-    height=550,
-    dragmode=False # ปิดฟังก์ชันการลากเมาส์เพื่อซูม (Box Zoom)
+    height=500,
+    margin=dict(l=10, r=10, t=50, b=50)
 )
 
-# 5. แสดงกราฟ และปิดปุ่มเครื่องมือ (Modebar)
+# 5. แสดงกราฟ
 st.plotly_chart(fig, width='stretch', config={
-    'displayModeBar': False, # ปิดแถบเครื่องมือทั้งหมดเหนือชื่อกราฟ
-    'scrollZoom': False      # ปิดการใช้ลูกกลิ้งเมาส์ซูม
+    'displayModeBar': True,
+    'modeBarButtonsToRemove': ['zoom', 'select', 'lasso2d', 'zoomIn', 'zoomOut', 'autoScale2d'],
+    'scrollZoom': False,  # ปิดการซูมด้วยลูกกลิ้งเมาส์ เพื่อให้ความกว้าง 30 วันคงที่เสมอ
+    'displaylogo': False
 })
-# --- ส่วนคำนวณ Metric (ต่อจากขั้นตอนเตรียม trend_data) ---
 
 # ตรวจสอบให้แน่ใจว่าเป็น datetime เพื่อใช้ฟังก์ชัน .dt
 trend_data['DATE_DT'] = pd.to_datetime(trend_data['DATE_SUBMIT'])
