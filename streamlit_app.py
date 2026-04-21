@@ -437,8 +437,8 @@ all_names = ["แสดงทุกคน"] + sorted(df['NAME'].dropna().astype(
 st.divider()
 col1, col2 = st.columns([0.2, 0.8])
 selected_name = col1.selectbox("🔍 ค้นหาชื่อคน:", all_names, key="trend_search")
-st.subheader("📈 แนวโน้มผลงานย้อนหลัง 30 วัน")
-
+st.subheader("📈 แนวโน้มผลงานย้อนหลัง")
+col1, col2 = st.columns([0.2, 0.8])
 # --- ส่วนของการเลือกช่วงเวลา ---
 time_option = col1.selectbox("เลือกช่วงเวลาการแสดงผล", ["30 วันล่าสุด", "ทั้งหมด"])
 # --- [ส่วนการเตรียมข้อมูล] ---
