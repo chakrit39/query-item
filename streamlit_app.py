@@ -615,41 +615,59 @@ display_trend_chart_fixed(df)
 import datetime
 
 def display_hourly_trend_chart(df_input, selected_date, selected_name):
-    # 1. จัดการเรื่อง Timezone +7
+    # --- จัดการเรื่องเวลาปัจจุบัน (+7) ---
     tz_thai = datetime.timezone(datetime.timedelta(hours=7))
     now_thai = datetime.datetime.now(tz_thai)
     current_date = now_thai.date()
     current_hour = now_thai.hour
-    
-    # 2. สร้างโครงเวลามาตรฐาน 07:00 - 20:00
+
+    # --- เตรียมโครงเวลา ---
     full_hours = [f"{h:02d}:00" for h in range(7, 21)]
     hourly_slots = pd.DataFrame({'HOUR': full_hours})
+
+    # --- กรองข้อมูล ---
+    # 1. กรองวันที่ (แปลงเป็น string เพื่อความชัวร์ในการเทียบ)
+    temp_df = df_input.copy()
+    temp_df['DATE_ONLY'] = pd.to_datetime(temp_df['DATE_SUBMIT']).dt.date
+    mask = (temp_df['DATE_ONLY'] == selected_date)
     
-    # 3. เตรียมข้อมูล
-    trend_df = df_input[df_input['TIME_SUBMIT'].notnull()].copy()
-    trend_df['TIME_DT'] = pd.to_datetime(trend_df['TIME_SUBMIT'])
-    
-    mask = (trend_df['TIME_DT'].dt.date == selected_date)
+    # 2. กรองชื่อ
     if selected_name != "แสดงทุกคน":
-        mask = mask & (trend_df['NAME'] == selected_name)
+        mask = mask & (temp_df['NAME'] == selected_name)
     
-    day_data = trend_df[mask].copy()
-    
-    # 4. คำนวณยอดสะสมรายชั่วโมง
+    day_data = temp_df[mask].copy()
+
     if not day_data.empty:
-        day_data['HOUR'] = day_data['TIME_DT'].dt.strftime('%H:00')
+        # จัดการเรื่องเวลา (ดึงเฉพาะ 2 หลักแรกของ TIME_SUBMIT)
+        def get_hour_string(t):
+            t_str = str(t).strip()
+            if ":" in t_str:
+                return t_str.split(":")[0].zfill(2) + ":00"
+            return None
+
+        day_data['HOUR'] = day_data['TIME_SUBMIT'].apply(get_hour_string)
+        day_data = day_data[day_data['HOUR'].notnull()]
+        
+        # นับงาน
         hourly_counts = day_data.groupby('HOUR').size().reset_index(name='hourly_done')
         merged_df = pd.merge(hourly_slots, hourly_counts, on='HOUR', how='left').fillna(0)
-        merged_df['cumulative_perf'] = (merged_df['hourly_done'] * 0.5).cumsum()
     else:
         merged_df = hourly_slots.copy()
-        merged_df['cumulative_perf'] = 0.0
+        merged_df['hourly_done'] = 0
 
-    # 5. [Logic ใหม่] คำนวณชั่วโมงที่ทำงานจริง (Active Hours)
+    # คำนวณสะสม
+    merged_df['cumulative_perf'] = (merged_df['hourly_done'] * 0.5).cumsum()
+
+    # --- ตัดข้อมูลพล็อตตามเวลาปัจจุบัน ---
     if selected_date == current_date:
         plot_df = merged_df[merged_df['HOUR'].apply(lambda x: int(x.split(":")[0])) <= current_hour].copy()
     else:
         plot_df = merged_df.copy()
+
+    # --- ตรวจสอบว่ามีข้อมูลสำหรับวาดกราฟไหม ---
+    if plot_df.empty:
+        st.info("🕒 ยังไม่มีข้อมูลการส่งงานในช่วงเวลานี้")
+        return
 
     # นับชั่วโมงที่ "มียอดงานเพิ่มขึ้น" (hourly_done > 0)
     # เราใช้ merged_df มาเช็คชั่วโมงที่เกิดงานจริงในช่วงเวลาที่ plot
