@@ -318,7 +318,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     fig.add_trace(go.Scatter(
         x=plot_df['HOUR'], y=plot_df['cumulative_perf'],
         mode='lines+markers+text',
-        text=plot_df['cumulative_perf'].apply(lambda x: f"{x:,.1f}" if x > 0 else ""),
+        text=plot_df['cumulative_perf'].apply(lambda x: f"{x:,d}" if x > 0 else ""),
         textposition="top center",
         line=dict(color='#0068C9', width=4, shape='linear'),
         fill='tozeroy', fillcolor='rgba(0, 104, 201, 0.1)',
