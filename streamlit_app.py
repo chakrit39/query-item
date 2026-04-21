@@ -395,8 +395,10 @@ def display_trend_chart_fixed(df_input):
     fig.add_trace(go.Scatter(
         x=plot_df['DATE_SUBMIT'], 
         y=plot_df['cumulative_perf'],
-        mode='lines',
-        name='ผลงานสะสมจริง',
+        mode='lines+text',
+        text=plot_df['cumulative_perf'].apply(lambda x: f"{x}" if x==plot_df['cumulative_perf'].max() else ""),
+        textposition="top center",
+        name='ผลงานสะสม',
         line=dict(color='#00CC96', width=3),
         fill='tozeroy', # ระบายสีใต้กราฟให้ดูสวยงาม
         fillcolor='rgba(0, 204, 150, 0.1)',
