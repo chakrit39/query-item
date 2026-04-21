@@ -332,8 +332,6 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     fig.update_traces(cliponaxis=False)
     st.plotly_chart(fig, width='stretch', config={
         'displayModeBar': False
-        'scrollZoom': False,  # ปิดการซูมด้วยลูกกลิ้งเมาส์ เพื่อให้ความกว้าง 30 วันคงที่เสมอ
-        'displaylogo': False
         })
     # --- แสดงผล Metric ---
     col1, col2, col3 = st.columns(3)
@@ -418,10 +416,7 @@ def display_trend_chart_fixed(df_input):
     )
     fig.update_traces(cliponaxis=False)
     st.plotly_chart(fig, width='stretch', config={
-        'displayModeBar': True,
-        'modeBarButtonsToRemove': ['zoom', 'select', 'lasso2d', 'zoomIn', 'zoomOut', 'autoScale2d'],
-        'scrollZoom': False,  # ปิดการซูมด้วยลูกกลิ้งเมาส์ เพื่อให้ความกว้าง 30 วันคงที่เสมอ
-        'displaylogo': False
+        'displayModeBar': False
         })
 
 # โหลดข้อมูล
