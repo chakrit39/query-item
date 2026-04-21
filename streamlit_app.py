@@ -331,6 +331,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     )
     fig.update_traces(cliponaxis=False)
     st.plotly_chart(fig, width='stretch', config={
+        'staticPlot': True,
         'displayModeBar': False
         })
     # --- แสดงผล Metric ---
@@ -416,6 +417,7 @@ def display_trend_chart_fixed(df_input):
     )
     fig.update_traces(cliponaxis=False)
     st.plotly_chart(fig, width='stretch', config={
+        'staticPlot': True,
         'displayModeBar': False
         })
 
