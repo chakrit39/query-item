@@ -550,7 +550,7 @@ fig.update_layout(
         type='date',
         tickformat="%d %b",
         # กำหนดให้เริ่มต้นแสดงแค่ 7 วันล่าสุด (เพื่อให้ช่องกว้างเท่ากัน)
-        range=[date_range[-7], date_range[-1]] if len(date_range) > 7 else None,
+        range=[date_range[-30], date_range[-1]] if len(date_range) > 30 else None,
         rangeslider=dict(visible=True, thickness=0.05), # แถบเลื่อนด้านล่าง
         fixedrange=False, # ยอมให้เลื่อน (Pan) ได้
         dtick="D1",
