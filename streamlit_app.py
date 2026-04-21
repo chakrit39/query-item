@@ -65,7 +65,7 @@ def get_full_data_time():
     ]
     credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
     client = bigquery.Client(credentials=credentials, project="dol-workspace")
-    query = "SELECT NAME, TIME_SUBMIT  FROM `dol-workspace.Dashboard_Work69.v_master_report`"
+    query = "SELECT NAME, TIME_SUBMIT  FROM `dol-workspace.Dashboard_Work69.v_master_timestamp_report`"
     df = client.query(query).to_dataframe()
     df['NAME'] = df['NAME'].fillna("ไม่ระบุชื่อ").astype(str) # เติมชื่อแทนค่าว่าง
     df = df[df['NAME']!="ไม่ระบุชื่อ"]
@@ -73,7 +73,6 @@ def get_full_data_time():
 # โหลดข้อมูล
 try:
     df,st.session_state['last_update'] = get_full_data()
-    #df_timestamp = get_full_data_time()
     df['DATE_SUBMIT'] = pd.to_datetime(df['DATE_SUBMIT']).dt.date
     today = datetime.now().date()
     df_tor = get_tor_data()  
@@ -709,8 +708,9 @@ def display_trend_chart_fixed(df_input):
     )
 
     st.plotly_chart(fig, width='stretch')
-display_trend_chart_fixed(df)
+if st.checkbox("ดูแนวโน้มผลงานสะสม"):
+    display_trend_chart_fixed(df)
 st.divider() 
-#agree = st.checkbox("ดูข้อมูลราย ชม.")
-#if agree:
-    #display_hourly_trend_chart(df_timestamp, selected_date, selected_name)
+if st.checkbox("ดูข้อมูลราย ชม."):
+    df_timestamp = get_full_data_time()
+    display_hourly_trend_chart(df_timestamp, selected_date, selected_name)
