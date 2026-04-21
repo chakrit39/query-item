@@ -342,7 +342,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     with col1:
         st.metric("✨ ดำเนินการแล้ว", f"{total_now:,.1f}")
     with col2:
-        st.metric("⏱️ เฉลี่ย/ชม. (ที่ทำจริง)", f"{avg_per_hour:,.2f}", 
+        st.metric("⏱️ ยอดงานเฉลี่ย/ชม. (ที่ทำจริง)", f"{avg_per_hour:,.2f}", 
                   help="หารเฉพาะชั่วโมงที่มียอดงานเพิ่มขึ้นเท่านั้น")
     with col3:
         st.metric("📅 เวลาที่ใช้จริง", f"{active_hours_count} ชม.", 
@@ -517,7 +517,7 @@ fig.update_layout(
         gridcolor='rgba(200, 200, 200, 0.1)'
     ),
     yaxis=dict(
-        title="จำนวนงาน",
+        title="ยอดงาน",
         range=[0, y_upper_limit],
         fixedrange=True   # ล็อกแกน Y นิ่งสนิท
     ),
@@ -569,7 +569,7 @@ with c1:
     st.metric(f"📊 ผลงานรวม", f"{total_sum:,.0f}", help=f"รวมยอดงานทั้งหมดในช่วง {label_suffix}")
 
 with c2:
-    st.metric(f"🎯 ยอดงานเฉลี่ย/วันทำการ", f"{avg_performance:,.2f}", 
+    st.metric(f"⏱️ ยอดงานเฉลี่ย/วันทำการ", f"{avg_performance:,.2f}", 
               help="คำนวณเฉพาะวันจันทร์-ศุกร์ที่มีการส่งงานจริง (ไม่นับวันที่ยอดเป็น 0)")
 
 with c3:
