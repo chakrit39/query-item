@@ -292,7 +292,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     else:
         merged_df = hourly_slots.copy()
         merged_df['hourly_done'] = 0.0
-        merged_df['cumulative_perf'] = 0.0
+        merged_df['cumulative_perf'] = 0
 
     # 5. [Logic ใหม่] คำนวณชั่วโมงที่ทำงานจริง (Active Hours)
     if selected_date == current_date:
@@ -318,7 +318,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     fig.add_trace(go.Scatter(
         x=plot_df['HOUR'], y=plot_df['cumulative_perf'],
         mode='lines+markers+text',
-        text=plot_df['cumulative_perf'].apply(lambda x: f"{x:,d}" if x > 0 else ""),
+        text=plot_df['cumulative_perf'].apply(lambda x: int(x) if x > 0 else ""),
         textposition="top center",
         line=dict(color='#0068C9', width=4, shape='linear'),
         fill='tozeroy', fillcolor='rgba(0, 104, 201, 0.1)',
