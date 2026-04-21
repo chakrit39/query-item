@@ -513,7 +513,7 @@ if time_option == "30 วันล่าสุด":
 else:
     # แก้ไขตรงนี้: ใช้คอลัมน์ที่สร้างขึ้นใหม่ หรือใช้ DATE_DT.min().date()
     if not df_trend.empty:
-        start_date = df_trend['DATE_DT'].min().date()
+        start_date = pd.Timestamp(2025, 10, 1).date()
     else:
         start_date = today
     date_range = pd.date_range(start=start_date, end=today).date
@@ -555,7 +555,7 @@ fig.update_layout(
         range=[start_view_date, today], 
         fixedrange=False, # ยอมให้เลื่อน (Pan) ได้ แต่ความกว้างจะคงที่
         dtick="D1",       # แสดงขีดทุกๆ 1 วัน
-        tickangle=-45,
+        tickangle=90,
         showgrid=True,
         gridcolor='rgba(200, 200, 200, 0.1)'
     ),
