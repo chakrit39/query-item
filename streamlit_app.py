@@ -615,88 +615,81 @@ display_trend_chart_fixed(df)
 import datetime
 
 def display_hourly_trend_chart(df_input, selected_date, selected_name):
-    # ปรับหัวข้อตามเงื่อนไขการเลือกชื่อ
-    title_name = "ทุกคนในทีม" if selected_name == "แสดงทุกคน" else selected_name
-    st.subheader(f"⏱️ แนวโน้มรายชั่วโมง ({title_name}): {selected_date.strftime('%d/%m/%Y')}")
-    
-    # 1. สร้างโครงเวลา 07:00 - 20:00
-    hourly_slots = pd.DataFrame({
-        'HOUR': [f"{h:02d}:00" for h in range(7, 21)]
-    })
-    
-    # --- [ส่วนที่เพิ่ม: จัดการกรณีวันปัจจุบัน] ---
+    # 1. จัดการเรื่อง Timezone +7
     tz_thai = datetime.timezone(datetime.timedelta(hours=7))
-    now = datetime.datetime.now(tz_thai)
-    current_date = now.date()
-    current_hour = now.hour
+    now_thai = datetime.datetime.now(tz_thai)
+    current_date = now_thai.date()
+    current_hour = now_thai.hour
     
-    # ถ้าวันที่เลือกคือวันนี้ ให้กรองโครงเวลาเอาเฉพาะชั่วโมงที่ไม่เกินเวลาปัจจุบัน
-    if selected_date == current_date:
-        # กรอง hourly_slots ให้แสดงถึงแค่ชั่วโมงปัจจุบัน (แต่ไม่เกิน 20:00)
-        limit_hour = min(current_hour, 20)
-        hourly_slots = hourly_slots[hourly_slots['HOUR'].apply(lambda x: int(x.split(":")[0])) <= limit_hour]
+    # 2. สร้างโครงเวลามาตรฐาน 07:00 - 20:00
+    full_hours = [f"{h:02d}:00" for h in range(7, 21)]
+    hourly_slots = pd.DataFrame({'HOUR': full_hours})
     
-    # 2. เตรียมข้อมูลจริง
-    if 'TIME_SUBMIT' not in df_input.columns:
-        st.warning("⚠️ ไม่พบข้อมูลคอลัมน์ TIME_SUBMIT")
-        return
-
+    # 3. เตรียมข้อมูล
     trend_df = df_input[df_input['TIME_SUBMIT'].notnull()].copy()
-    trend_df['TIME_SUBMIT'] = pd.to_datetime(trend_df['TIME_SUBMIT'])
+    trend_df['TIME_DT'] = pd.to_datetime(trend_df['TIME_SUBMIT'])
     
-    # กรองวันที่
-    mask = (trend_df['TIME_SUBMIT'].dt.date == selected_date)
-    
-    # กรองชื่อ
+    mask = (trend_df['TIME_DT'].dt.date == selected_date)
     if selected_name != "แสดงทุกคน":
         mask = mask & (trend_df['NAME'] == selected_name)
     
     day_data = trend_df[mask].copy()
     
+    # 4. คำนวณยอดสะสมรายชั่วโมง
     if not day_data.empty:
-        day_data['HOUR'] = day_data['TIME_SUBMIT'].dt.strftime('%H:00')
+        day_data['HOUR'] = day_data['TIME_DT'].dt.strftime('%H:00')
         hourly_counts = day_data.groupby('HOUR').size().reset_index(name='hourly_done')
-        
         merged_df = pd.merge(hourly_slots, hourly_counts, on='HOUR', how='left').fillna(0)
         merged_df['cumulative_perf'] = (merged_df['hourly_done'] * 0.5).cumsum()
     else:
         merged_df = hourly_slots.copy()
-        merged_df['cumulative_perf'] = 0
-        
+        merged_df['cumulative_perf'] = 0.0
+
+    # 5. [Logic ใหม่] คำนวณชั่วโมงที่ทำงานจริง (Active Hours)
     if selected_date == current_date:
-        # เก็บข้อมูลไว้เฉพาะชั่วโมงที่ผ่านมาแล้ว (เพื่อไม่ให้เส้นลากไป 0 ในอนาคต)
         plot_df = merged_df[merged_df['HOUR'].apply(lambda x: int(x.split(":")[0])) <= current_hour].copy()
     else:
         plot_df = merged_df.copy()
-    # 3. สร้างกราฟด้วย Plotly
-    fig = go.Figure()
 
-    # เส้นผลงานสะสม
+    # นับชั่วโมงที่ "มียอดงานเพิ่มขึ้น" (hourly_done > 0)
+    # เราใช้ merged_df มาเช็คชั่วโมงที่เกิดงานจริงในช่วงเวลาที่ plot
+    active_hours_df = plot_df[plot_df['hourly_done'] > 0]
+    active_hours_count = len(active_hours_df)
+    
+    total_now = plot_df['cumulative_perf'].iloc[-1] if not plot_df.empty else 0
+    
+    # คำนวณค่าเฉลี่ย (ถ้าไม่มีชั่วโมงที่ทำงานเลยให้เป็น 0 เพื่อกัน Error)
+    avg_per_hour = total_now / active_hours_count if active_hours_count > 0 else 0
+
+    # --- แสดงผล Metric ---
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("✨ ผลงานรวม (TOR)", f"{total_now:,.1f}")
+    with col2:
+        st.metric("⏱️ เฉลี่ย/ชม. (ที่ทำจริง)", f"{avg_per_hour:,.2f}", 
+                  help="หารเฉพาะชั่วโมงที่มียอดงานเพิ่มขึ้นเท่านั้น")
+    with col3:
+        st.metric("📅 เวลาที่ใช้จริง", f"{active_hours_count} ชม.", 
+                  help="นับเฉพาะชั่วโมงที่มีการส่งงาน")
+
+    # 6. สร้างกราฟ
+    st.subheader(f"📈 กราฟแนวโน้มรายชั่วโมง: {selected_name}")
+    fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=merged_df['HOUR'],
-        y=merged_df['cumulative_perf'],
+        x=plot_df['HOUR'], y=plot_df['cumulative_perf'],
         mode='lines+markers+text',
-        name='ผลรวมสะสม',
-        text=merged_df['cumulative_perf'].apply(lambda x: f"{x:,.1f}" if x > 0 else ""),
+        text=plot_df['cumulative_perf'].apply(lambda x: f"{x:,.1f}" if x > 0 else ""),
         textposition="top center",
-        line=dict(
-            color='#FF4B4B' if selected_name == "แสดงทุกคน" else '#0068C9', 
-            width=4, 
-            shape='spline'
-        ),
-        fill='tozeroy',
-        fillcolor='rgba(255, 75, 75, 0.1)' if selected_name == "แสดงทุกคน" else 'rgba(0, 104, 201, 0.1)',
-        hovertemplate='เวลา %{x}<br>สะสม: %{y:,.1f} รายการ<extra></extra>'
+        line=dict(color='#0068C9', width=4, shape='spline'),
+        fill='tozeroy', fillcolor='rgba(0, 104, 201, 0.1)',
+        hovertemplate='เวลา %{x}<br>สะสม: %{y:,.1f}<extra></extra>'
     ))
 
     fig.update_layout(
-        xaxis_title="ช่วงเวลา (น.)",
-        yaxis_title="ยอดสะสม (x0.5)",
+        xaxis=dict(type='category', categoryarray=full_hours),
+        yaxis=dict(tickformat=",d"),
         hovermode="x unified",
         height=400,
-        margin=dict(l=0, r=0, t=20, b=0),
-        xaxis=dict(gridcolor='rgba(200, 200, 200, 0.1)'),
-        yaxis=dict(gridcolor='rgba(200, 200, 200, 0.1)', tickformat=",d")
+        margin=dict(l=0, r=20, t=20, b=0),
     )
-    st.plotly_chart(fig, width='stretch')
 display_hourly_trend_chart(df, selected_date, selected_name)
