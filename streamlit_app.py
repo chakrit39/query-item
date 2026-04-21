@@ -662,7 +662,12 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     else:
         merged_df = hourly_slots.copy()
         merged_df['cumulative_perf'] = 0
-
+        
+    if selected_date == current_date:
+        # เก็บข้อมูลไว้เฉพาะชั่วโมงที่ผ่านมาแล้ว (เพื่อไม่ให้เส้นลากไป 0 ในอนาคต)
+        plot_df = merged_df[merged_df['HOUR'].apply(lambda x: int(x.split(":")[0])) <= current_hour].copy()
+    else:
+        plot_df = merged_df.copy()
     # 3. สร้างกราฟด้วย Plotly
     fig = go.Figure()
 
