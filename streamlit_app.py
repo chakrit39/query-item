@@ -613,61 +613,42 @@ def display_trend_chart_fixed(df_input):
     st.plotly_chart(fig, width='stretch')
 display_trend_chart_fixed(df)
 import datetime
-
 def display_hourly_trend_chart(df_input, selected_date, selected_name):
-    # --- จัดการเรื่องเวลาปัจจุบัน (+7) ---
+    # 1. จัดการเรื่อง Timezone +7
     tz_thai = datetime.timezone(datetime.timedelta(hours=7))
     now_thai = datetime.datetime.now(tz_thai)
     current_date = now_thai.date()
     current_hour = now_thai.hour
-
-    # --- เตรียมโครงเวลา ---
+    
+    # 2. สร้างโครงเวลามาตรฐาน 07:00 - 20:00
     full_hours = [f"{h:02d}:00" for h in range(7, 21)]
     hourly_slots = pd.DataFrame({'HOUR': full_hours})
-
-    # --- กรองข้อมูล ---
-    # 1. กรองวันที่ (แปลงเป็น string เพื่อความชัวร์ในการเทียบ)
-    temp_df = df_input.copy()
-    temp_df['DATE_ONLY'] = pd.to_datetime(temp_df['DATE_SUBMIT']).dt.date
-    mask = (temp_df['DATE_ONLY'] == selected_date)
     
-    # 2. กรองชื่อ
+    # 3. เตรียมข้อมูล
+    trend_df = df_input[df_input['TIME_SUBMIT'].notnull()].copy()
+    trend_df['TIME_DT'] = pd.to_datetime(trend_df['TIME_SUBMIT'])
+    
+    mask = (trend_df['TIME_DT'].dt.date == selected_date)
     if selected_name != "แสดงทุกคน":
-        mask = mask & (temp_df['NAME'] == selected_name)
+        mask = mask & (trend_df['NAME'] == selected_name)
     
-    day_data = temp_df[mask].copy()
-
+    day_data = trend_df[mask].copy()
+    
+    # 4. คำนวณยอดสะสมรายชั่วโมง
     if not day_data.empty:
-        # จัดการเรื่องเวลา (ดึงเฉพาะ 2 หลักแรกของ TIME_SUBMIT)
-        def get_hour_string(t):
-            t_str = str(t).strip()
-            if ":" in t_str:
-                return t_str.split(":")[0].zfill(2) + ":00"
-            return None
-
-        day_data['HOUR'] = day_data['TIME_SUBMIT'].apply(get_hour_string)
-        day_data = day_data[day_data['HOUR'].notnull()]
-        
-        # นับงาน
+        day_data['HOUR'] = day_data['TIME_DT'].dt.strftime('%H:00')
         hourly_counts = day_data.groupby('HOUR').size().reset_index(name='hourly_done')
         merged_df = pd.merge(hourly_slots, hourly_counts, on='HOUR', how='left').fillna(0)
+        merged_df['cumulative_perf'] = (merged_df['hourly_done'] * 0.5).cumsum()
     else:
         merged_df = hourly_slots.copy()
-        merged_df['hourly_done'] = 0
+        merged_df['cumulative_perf'] = 0.0
 
-    # คำนวณสะสม
-    merged_df['cumulative_perf'] = (merged_df['hourly_done'] * 0.5).cumsum()
-
-    # --- ตัดข้อมูลพล็อตตามเวลาปัจจุบัน ---
+    # 5. [Logic ใหม่] คำนวณชั่วโมงที่ทำงานจริง (Active Hours)
     if selected_date == current_date:
         plot_df = merged_df[merged_df['HOUR'].apply(lambda x: int(x.split(":")[0])) <= current_hour].copy()
     else:
         plot_df = merged_df.copy()
-
-    # --- ตรวจสอบว่ามีข้อมูลสำหรับวาดกราฟไหม ---
-    if plot_df.empty:
-        st.info("🕒 ยังไม่มีข้อมูลการส่งงานในช่วงเวลานี้")
-        return
 
     # นับชั่วโมงที่ "มียอดงานเพิ่มขึ้น" (hourly_done > 0)
     # เราใช้ merged_df มาเช็คชั่วโมงที่เกิดงานจริงในช่วงเวลาที่ plot
@@ -678,17 +659,6 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     
     # คำนวณค่าเฉลี่ย (ถ้าไม่มีชั่วโมงที่ทำงานเลยให้เป็น 0 เพื่อกัน Error)
     avg_per_hour = total_now / active_hours_count if active_hours_count > 0 else 0
-
-    # --- แสดงผล Metric ---
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("✨ ผลงานรวม (TOR)", f"{total_now:,.1f}")
-    with col2:
-        st.metric("⏱️ เฉลี่ย/ชม. (ที่ทำจริง)", f"{avg_per_hour:,.2f}", 
-                  help="หารเฉพาะชั่วโมงที่มียอดงานเพิ่มขึ้นเท่านั้น")
-    with col3:
-        st.metric("📅 เวลาที่ใช้จริง", f"{active_hours_count} ชม.", 
-                  help="นับเฉพาะชั่วโมงที่มีการส่งงาน")
 
     # 6. สร้างกราฟ
     st.subheader(f"📈 กราฟแนวโน้มรายชั่วโมง: {selected_name}")
@@ -711,4 +681,14 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         margin=dict(l=0, r=20, t=20, b=0),
     )
     st.plotly_chart(fig, width='stretch')
+        # --- แสดงผล Metric ---
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("✨ ผลงานรวม (TOR)", f"{total_now:,.1f}")
+    with col2:
+        st.metric("⏱️ เฉลี่ย/ชม. (ที่ทำจริง)", f"{avg_per_hour:,.2f}", 
+                  help="หารเฉพาะชั่วโมงที่มียอดงานเพิ่มขึ้นเท่านั้น")
+    with col3:
+        st.metric("📅 เวลาที่ใช้จริง", f"{active_hours_count} ชม.", 
+                  help="นับเฉพาะชั่วโมงที่มีการส่งงาน")
 display_hourly_trend_chart(df, selected_date, selected_name)
