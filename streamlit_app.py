@@ -541,8 +541,8 @@ fig.add_trace(go.Scatter(
     textposition="top center",
     line=dict(color="#29b5e8", width=3, shape='linear'),
     marker=dict(size=8),
-    fill='tozeroy',
-    fillcolor='rgba(41, 181, 232, 0.1)'
+    #fill='tozeroy',
+    #fillcolor='rgba(41, 181, 232, 0.1)'
 ))
 
 # 4. ปรับแต่ง Layout ให้ล็อกความกว้าง 30 วัน
