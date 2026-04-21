@@ -497,7 +497,7 @@ st.subheader("📈 แนวโน้มผลงานย้อนหลัง 
 last_30_days = [today - pd.Timedelta(days=i) for i in range(30)]
 
 df_last_30 = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
-df_last_30 = df_last_30[df_last_30['DATE_SUBMIT'].isin(last_30_days)]
+#df_last_30 = df_last_30[df_last_30['DATE_SUBMIT'].isin(last_30_days)]
 trend_data_30 = (
     df_last_30.groupby('DATE_SUBMIT')
     .size()
