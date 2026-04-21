@@ -330,8 +330,12 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         margin=dict(l=0, r=20, t=20, b=0),
     )
     fig.update_traces(cliponaxis=False)
-    st.plotly_chart(fig, width='stretch')
-        # --- แสดงผล Metric ---
+    st.plotly_chart(fig, width='stretch', config={
+        'displayModeBar': False
+        'scrollZoom': False,  # ปิดการซูมด้วยลูกกลิ้งเมาส์ เพื่อให้ความกว้าง 30 วันคงที่เสมอ
+        'displaylogo': False
+        })
+    # --- แสดงผล Metric ---
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("✨ ดำเนินการแล้ว", f"{total_now:,.1f}")
@@ -413,7 +417,12 @@ def display_trend_chart_fixed(df_input):
         height=450
     )
     fig.update_traces(cliponaxis=False)
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width='stretch', config={
+        'displayModeBar': True,
+        'modeBarButtonsToRemove': ['zoom', 'select', 'lasso2d', 'zoomIn', 'zoomOut', 'autoScale2d'],
+        'scrollZoom': False,  # ปิดการซูมด้วยลูกกลิ้งเมาส์ เพื่อให้ความกว้าง 30 วันคงที่เสมอ
+        'displaylogo': False
+        })
 
 # โหลดข้อมูล
 try:
@@ -438,8 +447,9 @@ st.divider()
 col1, col2 = st.columns([0.2, 0.8])
 selected_name = col1.selectbox("🔍 ค้นหาชื่อคน:", all_names, key="trend_search")
 st.subheader("📈 แนวโน้มผลงานย้อนหลัง")
-col1, col2 = st.columns([0.2, 0.8])
+
 # --- ส่วนของการเลือกช่วงเวลา ---
+col1, col2 = st.columns([0.2, 0.8])
 time_option = col1.selectbox("เลือกช่วงเวลาการแสดงผล", ["30 วันล่าสุด", "ทั้งหมด"])
 # --- [ส่วนการเตรียมข้อมูล] ---
 # กำหนดจุดเริ่มแสดงผล (Start) และจุดสิ้นสุด (End) ให้ห่างกัน 30 วันเป๊ะๆ
@@ -502,7 +512,7 @@ fig.update_layout(
         range=[start_view_date, today], 
         fixedrange=False, # ยอมให้เลื่อน (Pan) ได้ แต่ความกว้างจะคงที่
         dtick="D1",       # แสดงขีดทุกๆ 1 วัน
-        tickangle=90,
+        tickangle=-90,
         showgrid=True,
         gridcolor='rgba(200, 200, 200, 0.1)'
     ),
