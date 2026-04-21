@@ -612,66 +612,67 @@ def display_trend_chart_fixed(df_input):
 
     st.plotly_chart(fig, width='stretch')
 display_trend_chart_fixed(df)
-def display_hourly_trend_chart(df_input, selected_date):
-    st.subheader(f"⏱️ แนวโน้มผลงานรายชั่วโมง: {selected_date.strftime('%d/%m/%Y')}")
+def display_hourly_trend_chart(df_input, selected_date, selected_name):
+    # ปรับหัวข้อตามเงื่อนไขการเลือกชื่อ
+    title_name = "ทุกคนในทีม" if selected_name == "แสดงทุกคน" else selected_name
+    st.subheader(f"⏱️ แนวโน้มรายชั่วโมง ({title_name}): {selected_date.strftime('%d/%m/%Y')}")
     
-    # 1. สร้างโครงเวลา 07:00 - 20:00 (เพื่อให้กราฟแสดงครบทุกช่วงเวลา)
+    # 1. สร้างโครงเวลา 07:00 - 20:00
     hourly_slots = pd.DataFrame({
         'HOUR': [f"{h:02d}:00" for h in range(7, 21)]
     })
     
-    # 2. เตรียมข้อมูลจริงจากคอลัมน์ TIME_SUBMIT
-    # ตรวจสอบว่าคอลัมน์มีอยู่จริงและกรองค่าว่างออก
+    # 2. เตรียมข้อมูลจริง
     if 'TIME_SUBMIT' not in df_input.columns:
         st.warning("⚠️ ไม่พบข้อมูลคอลัมน์ TIME_SUBMIT")
         return
 
     trend_df = df_input[df_input['TIME_SUBMIT'].notnull()].copy()
-    
-    # แปลงให้เป็น datetime (เผื่อข้อมูลมาเป็น String)
     trend_df['TIME_SUBMIT'] = pd.to_datetime(trend_df['TIME_SUBMIT'])
     
-    # กรองเอาเฉพาะข้อมูลของวันที่เลือกดู (เปรียบเทียบเฉพาะส่วนของ Date)
-    mask = trend_df['TIME_SUBMIT'].dt.date == selected_date
+    # --- [ส่วนการกรองข้อมูล] ---
+    # กรองวันที่ก่อนเสมอ
+    mask = (trend_df['TIME_SUBMIT'].dt.date == selected_date)
+    
+    # ถ้าไม่ใช่ "แสดงทุกคน" ให้กรองชื่อเพิ่มเข้าไป
+    if selected_name != "แสดงทุกคน":
+        mask = mask & (trend_df['NAME'] == selected_name)
+    
     day_data = trend_df[mask].copy()
     
     if not day_data.empty:
-        # จัดฟอร์แมตชั่วโมงให้เป็น HH:00 เพื่อให้ตรงกับ hourly_slots
         day_data['HOUR'] = day_data['TIME_SUBMIT'].dt.strftime('%H:00')
         
-        # นับจำนวนงานต่อชั่วโมง
+        # นับจำนวนงานต่อชั่วโมง (ถ้าแสดงทุกคน มันจะ Sum รวมงานของทุกคนที่ส่งในชั่วโมงนั้นมาให้)
         hourly_counts = day_data.groupby('HOUR').size().reset_index(name='hourly_done')
         
-        # Merge กับโครงเวลาและคำนวณสะสม
         merged_df = pd.merge(hourly_slots, hourly_counts, on='HOUR', how='left').fillna(0)
-        # คำนวณสะสมรายชั่วโมง (จำนวนงาน * 0.5)
         merged_df['cumulative_perf'] = (merged_df['hourly_done'] * 0.5).cumsum()
     else:
-        # กรณีไม่มีข้อมูลในวันนั้นเลย
         merged_df = hourly_slots.copy()
         merged_df['cumulative_perf'] = 0
 
     # 3. สร้างกราฟด้วย Plotly
     fig = go.Figure()
 
-    # เส้นผลงานสะสมรายชั่วโมง
     fig.add_trace(go.Scatter(
         x=merged_df['HOUR'],
         y=merged_df['cumulative_perf'],
         mode='lines+markers+text',
-        name='ผลงานสะสม',
-        text=merged_df['cumulative_perf'].apply(lambda x: f"{x:.1f}" if x > 0 else ""),
+        name=f'ผลรวมสะสม',
+        # แสดงตัวเลขบนกราฟ (ถ้าเป็นยอดรวมอาจจะตัวเลขใหญ่ ให้ใช้ ,.1f)
+        text=merged_df['cumulative_perf'].apply(lambda x: f"{x:,.1f}" if x > 0 else ""),
         textposition="top center",
-        line=dict(color='#0068C9', width=4, shape='spline'), # ปรับเป็นเส้นโค้งมน (spline) เพื่อความสวยงาม
+        line=dict(color='#FF4B4B' if selected_name == "แสดงทุกคน" else '#0068C9', 
+                  width=4, shape='spline'),
         fill='tozeroy',
-        fillcolor='rgba(0, 104, 201, 0.1)',
+        fillcolor='rgba(255, 75, 75, 0.1)' if selected_name == "แสดงทุกคน" else 'rgba(0, 104, 201, 0.1)',
         hovertemplate='เวลา %{x}<br>สะสม: %{y:,.1f} รายการ<extra></extra>'
     ))
 
-    # ปรับแต่ง Layout
     fig.update_layout(
         xaxis_title="ช่วงเวลา (น.)",
-        yaxis_title="ยอดสะสม (x0.5)",
+        yaxis_title="ยอดสะสมรวม (x0.5)",
         hovermode="x unified",
         height=400,
         margin=dict(l=0, r=0, t=20, b=0),
@@ -679,5 +680,5 @@ def display_hourly_trend_chart(df_input, selected_date):
         yaxis=dict(gridcolor='rgba(200, 200, 200, 0.1)', tickformat=",d")
     )
 
-    st.plotly_chart(fig, use_container_width=True)
-display_hourly_trend_chart(df, selected_date)
+    st.plotly_chart(fig, width='stretch')
+display_hourly_trend_chart(df, selected_date, selected_name)
