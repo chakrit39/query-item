@@ -355,6 +355,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         merged_df['cumulative_perf'] = merged_df['hourly_done'].cumsum()
     else:
         merged_df = hourly_slots.copy()
+        merged_df['hourly_done'] = 0.0
         merged_df['cumulative_perf'] = 0.0
 
     # 5. [Logic ใหม่] คำนวณชั่วโมงที่ทำงานจริง (Active Hours)
@@ -362,9 +363,6 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
         plot_df = merged_df[merged_df['HOUR'].apply(lambda x: int(x.split(":")[0])) <= current_hour].copy()
     else:
         plot_df = merged_df.copy()
-    if plot_df.empty:
-        st.warning("⚠️ ไม่มีข้อมูลงานที่ดำเนินการในวันนี้")
-        return
     # นับชั่วโมงที่ "มียอดงานเพิ่มขึ้น" (hourly_done > 0)
     # เราใช้ merged_df มาเช็คชั่วโมงที่เกิดงานจริงในช่วงเวลาที่ plot
     active_hours_df = plot_df[plot_df['hourly_done'] > 0]
