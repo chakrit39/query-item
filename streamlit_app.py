@@ -44,8 +44,8 @@ def get_full_data():
     ]
     credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
     client = bigquery.Client(credentials=credentials, project="dol-workspace")
-    
-    query = "SELECT * FROM `dol-workspace.Dashboard_Work69.v_master_report`"
+    #, TIME_SUBMIT
+    query = "SELECT NAME, QUA_PIC, SURV_DATA, SURV_TYP, BUILD_FROM, DATE_SUBMIT, sheet_name FROM `dol-workspace.Dashboard_Work69.v_master_report`"
     df = client.query(query).to_dataframe()
     df['NAME'] = df['NAME'].fillna("ไม่ระบุชื่อ").astype(str) # เติมชื่อแทนค่าว่าง
     df = df[df['NAME']!="ไม่ระบุชื่อ"]
