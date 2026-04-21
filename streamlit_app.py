@@ -53,10 +53,29 @@ def get_full_data():
     tz = pytz.timezone('Asia/Bangkok')
     now_bkk = datetime.now(tz)
     return df ,now_bkk.strftime("%d/%m/%Y %H:%M:%S")
+    
+@st.cache_data(ttl=900)
+def get_full_data_time():
+    # ดึงข้อมูลจาก Secrets (Streamlit Cloud)
+    info = st.secrets["gcp_service_account"]
+    SCOPES = [
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/bigquery",
+        "https://www.googleapis.com/auth/cloud-platform"
+    ]
+    credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
+    client = bigquery.Client(credentials=credentials, project="dol-workspace")
+    query = "SELECT NAME, TIME_SUBMIT  FROM `dol-workspace.Dashboard_Work69.v_master_report`"
+    df = client.query(query).to_dataframe()
+    df['NAME'] = df['NAME'].fillna("ไม่ระบุชื่อ").astype(str) # เติมชื่อแทนค่าว่าง
+    df = df[df['NAME']!="ไม่ระบุชื่อ"]
+    df['sheet_name'] = df['sheet_name'].fillna("ไม่ระบุชีต").astype(str)
 
+    return df
 # โหลดข้อมูล
 try:
     df,st.session_state['last_update'] = get_full_data()
+    df_timestamp = get_full_data_time()
     df['DATE_SUBMIT'] = pd.to_datetime(df['DATE_SUBMIT']).dt.date
     today = datetime.now().date()
     df_tor = get_tor_data()  
@@ -695,5 +714,5 @@ def display_trend_chart_fixed(df_input):
 display_trend_chart_fixed(df)
 st.divider() 
 agree = st.checkbox("ดูข้อมูลราย ชม.")
-if 0:
-    display_hourly_trend_chart(df, selected_date, selected_name)
+if agree:
+    display_hourly_trend_chart(df_timestamp, selected_date, selected_name)
