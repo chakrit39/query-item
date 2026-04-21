@@ -511,7 +511,7 @@ if time_option == "30 วันล่าสุด":
     date_range = pd.date_range(end=today, periods=30).date
 else:
     # ถ้าเลือกทั้งหมด ให้เริ่มจากวันที่เก่าที่สุดที่มีในข้อมูลจนถึงวันนี้
-    start_date = df_trend['DATE_ONLY'].min() if not df_trend.empty else today
+    start_date = df_trend['DATE_SUBMIT'].min() if not df_trend.empty else today
     date_range = pd.date_range(start=start_date, end=today).date
 
 # Groupby และ Reindex
