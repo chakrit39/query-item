@@ -427,6 +427,9 @@ def display_trend_chart_fixed(df_input):
         })
     
 def df_type(df,selected_name,selected_date,daily=False):
+    
+    st.subheader("ประเภทข้อมูลที่ดำเนินการ")
+    
     df_ = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
     if daily:
         df_ = df_[df['DATE_SUBMIT'] == selected_date]
