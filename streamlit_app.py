@@ -432,7 +432,7 @@ def df_data_type(df,selected_name,selected_date,daily=False):
     
     df_ = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
     if daily:
-        df_ = df_[df['DATE_SUBMIT'] == selected_date]
+        df_ = df_[df_['DATE_SUBMIT'] == selected_date]
     df_TYP = df_.groupby('SURV_TYP').size().reset_index(name='จำนวน')
     df_TYP = df_TYP.sort_values(by='จำนวน', ascending=False)
     df_TYP = df_TYP[df_TYP['SURV_TYP']!="                                                                                                                                                                                                      "]
