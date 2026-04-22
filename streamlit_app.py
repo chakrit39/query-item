@@ -426,7 +426,7 @@ def display_trend_chart_fixed(df_input):
         'displayModeBar': False
         })
     
-def df_data_type(df,selected_name,selected_date,daily=False):
+def df_data_type(df,selected_date,selected_name="แสดงทุกคน",daily=False):
     
     st.subheader("ประเภทข้อมูลที่ดำเนินการ")
     
@@ -661,6 +661,8 @@ with left_col:
     #display_styled_dataframe(res_sheet_l, "📂 สรุปตามแผ่นงาน")
     res_sheet_l = summary_with_metrics_v2(display_df_l, 'sheet_name', df_tor, today)
     display_styled_dataframe_v2(res_sheet_l, "📂 สรุปตามแผ่นงาน")
+
+    df_data_type(df,selected_date,selected_name="แสดงทุกคน",daily=False)
 # --- [ฝั่งขวา: เฉพาะวันนี้] ---
 with right_col:
     
@@ -725,8 +727,7 @@ with right_col:
         #display_styled_dataframe(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
         res_sheet_r = summary_with_metrics_v2(display_df_r, 'sheet_name', df_tor, selected_date)
         display_styled_dataframe_v2(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
-        
-        df_data_type(df,selected_name,selected_date,daily=True)
+        df_data_type(df,selected_date,selected_name=selected_name,daily=True)
         
 st.divider()   
 if st.checkbox("แสดงข้อมูลราย ชม."):
