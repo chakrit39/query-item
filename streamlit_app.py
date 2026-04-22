@@ -425,7 +425,44 @@ def display_trend_chart_fixed(df_input):
         'staticPlot': True,
         'displayModeBar': False
         })
-
+    
+def df_type(df,selected_name,selected_date,daily=False):
+    df_ = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
+    if daily:
+        df_ = df_[df['DATE_SUBMIT'] == selected_date]
+    df_TYP = df_.groupby('SURV_TYP').size().reset_index(name='จำนวน')
+    df_TYP = df_TYP.sort_values(by='จำนวน', ascending=False)
+    df_TYP = df_TYP[df_TYP['SURV_TYP']!="                                                                                                                                                                                                      "]
+    dynamic_height = 35 * (len(df_TYP) + 1)
+    st .dataframe(df_TYP, width='stretch', hide_index=True,
+                        column_config={
+                                        "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
+                                        },
+                        height=dynamic_height
+                       )
+    
+    df_IMG = df_.groupby('QUA_PIC').size().reset_index(name='จำนวน')
+    df_IMG = df_IMG.sort_values(by='จำนวน', ascending=False)
+    df_IMG = df_IMG[df_IMG['QUA_PIC']!="                                                                                                                                                                                                      "]
+    dynamic_height = 35 * (len(df_IMG) + 1)
+    st .dataframe(df_IMG, width='stretch', hide_index=True,
+                        column_config={
+                                        "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
+                                        },
+                        height=dynamic_height
+                       )
+    
+    df_BUILD = df_.groupby('BUILD_FROM').size().reset_index(name='จำนวน')
+    df_BUILD = df_BUILD.sort_values(by='จำนวน', ascending=False)
+    df_BUILD = df_BUILD[df_BUILD['BUILD_FROM']!="                                                                                                                                                                                                      "]
+    dynamic_height = 35 * (len(df_BUILD) + 1)
+    st.dataframe(df_BUILD, width='stretch', hide_index=True,
+                         column_config={
+                                        "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
+                                        },
+                         height=dynamic_height
+                       )
+    
 # โหลดข้อมูล
 try:
     df,st.session_state['last_update'] = get_full_data()
@@ -685,44 +722,8 @@ with right_col:
         res_sheet_r = summary_with_metrics_v2(display_df_r, 'sheet_name', df_tor, selected_date)
         display_styled_dataframe_v2(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
         
-st.divider()
-if st.checkbox("แสดงข้อมูลประเภทงานที่ดำเนินการแล้ว"):
-    df_ = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
-    left_col_, cen_col_, right_col_ = st.columns([1, 1, 1])
-        #total_assigned = input_df.groupby(group_col).size().reset_index(name='มอบหมาย')
-        #finished_tasks = input_df[input_df['DATE_SUBMIT'].notnull()].groupby(group_col).size().reset_index(name='ดำเนินการแล้ว')
-    df_TYP = df_.groupby('SURV_TYP').size().reset_index(name='จำนวน')
-    df_TYP = df_TYP.sort_values(by='จำนวน', ascending=False)
-    df_TYP = df_TYP[df_TYP['SURV_TYP']!="                                                                                                                                                                                                      "]
-    dynamic_height = 35 * (len(df_TYP) + 1)
-    cen_col_ .dataframe(df_TYP, width='stretch', hide_index=True,
-                        column_config={
-                                        "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
-                                        },
-                        height=dynamic_height
-                       )
-    
-    df_IMG = df_.groupby('QUA_PIC').size().reset_index(name='จำนวน')
-    df_IMG = df_IMG.sort_values(by='จำนวน', ascending=False)
-    df_IMG = df_IMG[df_IMG['QUA_PIC']!="                                                                                                                                                                                                      "]
-    dynamic_height = 35 * (len(df_IMG) + 1)
-    right_col_ .dataframe(df_IMG, width='stretch', hide_index=True,
-                        column_config={
-                                        "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
-                                        },
-                        height=dynamic_height
-                       )
-    
-    df_BUILD = df_.groupby('BUILD_FROM').size().reset_index(name='จำนวน')
-    df_BUILD = df_BUILD.sort_values(by='จำนวน', ascending=False)
-    df_BUILD = df_BUILD[df_BUILD['BUILD_FROM']!="                                                                                                                                                                                                      "]
-    dynamic_height = 35 * (len(df_BUILD) + 1)
-    left_col_.dataframe(df_BUILD, width='stretch', hide_index=True,
-                         column_config={
-                                        "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
-                                        },
-                         height=dynamic_height
-                       )
+        df_type(df,selected_name,selected_date,daily=True)
+        
 st.divider()   
 if st.checkbox("แสดงข้อมูลราย ชม."):
     df_timestamp = get_full_data_time()
