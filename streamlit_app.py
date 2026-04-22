@@ -432,7 +432,8 @@ def df_data_type(df,selected_name,selected_date,daily=False):
     
     df_ = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
     if daily:
-        df_ = df_[df_['DATE_SUBMIT'] == selected_date]
+        df_['DATE_ONLY'] = pd.to_datetime(df_['DATE_SUBMIT']).dt.date
+        df_ = df_[df_['DATE_ONLY'] == selected_date]
     df_TYP = df_.groupby('SURV_TYP').size().reset_index(name='จำนวน')
     df_TYP = df_TYP.sort_values(by='จำนวน', ascending=False)
     df_TYP = df_TYP[df_TYP['SURV_TYP']!="                                                                                                                                                                                                      "]
@@ -725,7 +726,7 @@ with right_col:
         res_sheet_r = summary_with_metrics_v2(display_df_r, 'sheet_name', df_tor, selected_date)
         display_styled_dataframe_v2(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
         
-        #df_data_type(df,selected_name,selected_date,daily=True)
+        df_data_type(df,selected_name,selected_date,daily=True)
         
 st.divider()   
 if st.checkbox("แสดงข้อมูลราย ชม."):
