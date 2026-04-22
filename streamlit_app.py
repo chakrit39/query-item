@@ -725,7 +725,7 @@ with right_col:
         res_sheet_r = summary_with_metrics_v2(display_df_r, 'sheet_name', df_tor, selected_date)
         display_styled_dataframe_v2(res_sheet_r, f"📂 สรุปตามแผ่นงานวันที่ {selected_date}")
         
-        df_type(df,selected_name,selected_date,daily=True)
+        #df_type(df,selected_name,selected_date,daily=True)
         
 st.divider()   
 if st.checkbox("แสดงข้อมูลราย ชม."):
