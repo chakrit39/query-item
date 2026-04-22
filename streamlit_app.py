@@ -445,7 +445,7 @@ def df_type(df,selected_name,selected_date,daily=False):
     df_IMG = df_IMG.sort_values(by='จำนวน', ascending=False)
     df_IMG = df_IMG[df_IMG['QUA_PIC']!="                                                                                                                                                                                                      "]
     dynamic_height = 35 * (len(df_IMG) + 1)
-    st .dataframe(df_IMG, width='stretch', hide_index=True,
+    st.dataframe(df_IMG, width='stretch', hide_index=True,
                         column_config={
                                         "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
                                         },
