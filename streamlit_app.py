@@ -265,7 +265,7 @@ def display_hourly_trend_chart(df_input, selected_date, selected_name):
     
     # 1. จัดการเรื่อง Timezone +7
     tz_thai = datetime2.timezone(datetime2.timedelta(hours=7))
-    now_thai = datetime2.datetime.now(tz_thai)
+    now_thai = datetime2.datetime.now(tz_thai) + datetime2.timedelta(hours=1)
     current_date = now_thai.date()
     current_hour = now_thai.hour
     
