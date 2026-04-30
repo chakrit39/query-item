@@ -230,10 +230,15 @@ def display_styled_dataframe_v2(df_display, title):
     dynamic_height = 35 * (len(df_display) + 1)
 
     def get_color(val):
-        if val >= 100:
-            return "green" # หรือรหัสสีเช่น "#00ff00"
-        else:
-            return "red"
+            try:
+                if val >= 100:
+                    return "#228B22" # ForestGreen (เขียว)
+                elif val < 100:
+                    return "#FF4B4B" # Streamlit Red (แดง)
+                return "#808080"     # Gray (ถ้าไม่ใช่ตัวเลขหรือค่าว่าง)
+            except:
+                return "#808080"
+                
     df_display["bar_color"] = df_display["ความคืบหน้า (%)"].apply(get_color)
     
     st.dataframe(
@@ -639,7 +644,7 @@ with left_col:
     #res_name_l = summary_with_metrics(display_df_l, 'NAME', show_total=show_total_l)
     #display_styled_dataframe(res_name_l, "👨‍💼 สรุปรายบุคคล")
     res_name_l = summary_with_metrics_v2(display_df_l, 'NAME', df_tor, today, show_total=show_total_l)
-    display_styled_dataframe_v2(res_name_l, "👨‍💼 สรุปรายบุคคลด")
+    display_styled_dataframe_v2(res_name_l, "👨‍💼 สรุปรายบุคคล")
     # Progress Bar ภาพรวมฝั่งซ้าย
     total_pct_l = res_name_l.iloc[-1]['ความคืบหน้า (%)']
     st.write(f"**ความคืบหน้าภาพรวมสะสม:** {total_pct_l:.2f}%")
