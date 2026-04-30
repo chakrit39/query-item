@@ -244,7 +244,7 @@ def display_styled_dataframe_v2(df_display, title):
     st.dataframe(
         df_display,
         column_config={
-            "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100, color="bar_color"),
+            "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100, color=df_display["bar_color"]),
             "ผลงาน (TOR)": st.column_config.NumberColumn("ผลงาน (TOR)", format="%,.1f", alignment="center"),
             "เป้าสะสม (TOR)": st.column_config.NumberColumn("เป้าหมาย (TOR)", format="%,d", alignment="center"),
             "+/- เป้าหมาย": st.column_config.TextColumn("สถานะ/ส่วนต่าง", alignment="center"),
