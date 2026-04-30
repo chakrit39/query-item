@@ -237,7 +237,21 @@ def display_styled_dataframe_v2(df_display, title):
                 'background-color': '#262730', 
                 }
             )
-    
+    elif "sheet_name" in df_display.columns:
+        df_display = df_display.style.set_properties(
+            subset=["sheet_name", "ความคืบหน้า (%)"], # เปลี่ยนเป็นชื่อคอลัมน์ที่ต้องการ
+            **{
+                'background-color': '#262730', 
+                }
+            )
+    elif "จำนวน" in df_display.columns:
+        df_display = df_display.style.set_properties(
+            subset=["จำนวน"], # เปลี่ยนเป็นชื่อคอลัมน์ที่ต้องการ
+            **{
+                'background-color': '#262730', 
+                }
+            )
+        
     st.dataframe(
         df_display,
         column_config={
