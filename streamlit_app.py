@@ -235,7 +235,8 @@ def display_styled_dataframe_v2(df_display, title):
             #'background-color: #FFFF00;' # สีเหลืองไฮไลท์
             #'color: #000000;'           # ตัวอักษรสีดำ
             'font-weight: bold;'        # ตัวหนา
-            'border-radius: 4px;'       # มนขอบเล็กน้อย
+            'border: 2px solid red;'
+            #'border-radius: 4px;'       # มนขอบเล็กน้อย
             )
     
     # 2. นำสไตล์ไปใช้กับคอลัมน์ที่ต้องการ (เช่น NAME หรือ +/- เป้าหมาย)
