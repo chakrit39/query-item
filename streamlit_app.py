@@ -228,22 +228,22 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
 def display_styled_dataframe_v2(df_display, title):
     st.subheader(title)
     dynamic_height = 35 * (len(df_display) + 1)
-    def highlight_text(val):
+    #def highlight_text(val):
         # ตั้งค่าสีพื้นหลัง (Background) และสีตัวอักษร (Color)
         # padding และ border-radius จะช่วยให้ดูเหมือนป้ายปากกาไฮไลท์มากขึ้น
-        return (
+        #return (
             #'background-color: #FFFF00;' # สีเหลืองไฮไลท์
             #'color: #000000;'           # ตัวอักษรสีดำ
             #'font-weight: bold;'        # ตัวหนา
-            'border: 2px solid red;'
+            #'border: 2px solid red;'
             #'border-radius: 4px;'       # มนขอบเล็กน้อย
-            )
+           # )
     
     # 2. นำสไตล์ไปใช้กับคอลัมน์ที่ต้องการ (เช่น NAME หรือ +/- เป้าหมาย)
-    df_display = df_display.style.map(
-        highlight_text, 
-        subset=["NAME"] # เปลี่ยนเป็นชื่อคอลัมน์ที่คุณต้องการไฮไลท์
-        )
+    #df_display = df_display.style.map(
+        #highlight_text, 
+        #subset=["NAME"] # เปลี่ยนเป็นชื่อคอลัมน์ที่คุณต้องการไฮไลท์
+        #)
     st.dataframe(
         df_display,
         column_config={
