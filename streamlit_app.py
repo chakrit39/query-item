@@ -240,7 +240,7 @@ def display_styled_dataframe_v2(df_display, title):
                 return "#808080"
                 
     df_display["bar_color"] = df_display["ความคืบหน้า (%)"].apply(get_color)
-    
+    st.dataframe(df_display)
     st.dataframe(
         df_display,
         column_config={
