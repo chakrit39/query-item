@@ -724,10 +724,10 @@ with right_col:
         df_data_type(df,selected_name,selected_date,daily=True)
         
 st.divider()   
-if st.checkbox("แสดงข้อมูลราย ชม."):
+#if st.checkbox("แสดงข้อมูลราย ชม."):
     #df_timestamp = get_full_data_time()
-    display_hourly_trend_chart(df, selected_date, selected_name)
+display_hourly_trend_chart(df, selected_date, selected_name)
 
 st.divider() 
-if st.checkbox("แสดงแนวโน้มผลงานสะสม"):
-    display_trend_chart_fixed(df)
+#if st.checkbox("แสดงแนวโน้มผลงานสะสม"):
+display_trend_chart_fixed(df)
