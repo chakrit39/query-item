@@ -229,7 +229,7 @@ def display_styled_dataframe_v2(df_display, title):
     st.subheader(title)
     dynamic_height = 35 * (len(df_display) + 1)
     
-    target_cols = ["NAME", "เป้าสะสม (TOR)", "ผลงาน (TOR)","ความคืบหน้า (%)"]
+    target_cols = ["NAME", "เป้าสะสม (TOR)", "ผลงาน (TOR)"] #,"ความคืบหน้า (%)"
     if all(col in df_display.columns for col in target_cols):
         df_display = df_display.style.set_properties(
             subset=target_cols, # เปลี่ยนเป็นชื่อคอลัมน์ที่ต้องการ
