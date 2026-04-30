@@ -234,7 +234,7 @@ def display_styled_dataframe_v2(df_display, title):
         return (
             #'background-color: #FFFF00;' # สีเหลืองไฮไลท์
             #'color: #000000;'           # ตัวอักษรสีดำ
-            'font-weight: bold;'        # ตัวหนา
+            #'font-weight: bold;'        # ตัวหนา
             'border: 2px solid red;'
             #'border-radius: 4px;'       # มนขอบเล็กน้อย
             )
