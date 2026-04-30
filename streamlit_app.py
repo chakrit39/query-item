@@ -234,7 +234,7 @@ def display_styled_dataframe_v2(df_display, title):
             return "green" # หรือรหัสสีเช่น "#00ff00"
         else:
             return "red"
-    df["bar_color"] = df["ความคืบหน้า (%)"].apply(get_color)
+    df_display["bar_color"] = df_display["ความคืบหน้า (%)"].apply(get_color)
     
     st.dataframe(
         df_display,
