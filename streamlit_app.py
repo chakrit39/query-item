@@ -435,7 +435,15 @@ def display_trend_chart_fixed(df_input):
         })
     
 def df_data_type(df,selected_name,selected_date,daily=False):
-    
+    def process_and_display(df_display):
+        if "จำนวน" in df_display.columns:
+            df_display = df_display.style.set_properties(
+                subset=["จำนวน"], # เปลี่ยนเป็นชื่อคอลัมน์ที่ต้องการ
+                **{
+                    'background-color': '#262730', 
+                    }
+                )
+        return df_display
     st.subheader("ประเภทข้อมูลที่ดำเนินการ")
     
     df_ = df if selected_name == "แสดงทุกคน" else df[df['NAME'] == selected_name]
@@ -446,6 +454,7 @@ def df_data_type(df,selected_name,selected_date,daily=False):
     df_TYP = df_TYP.sort_values(by='จำนวน', ascending=False)
     df_TYP = df_TYP[df_TYP['SURV_TYP']!="                                                                                                                                                                                                      "]
     dynamic_height = 35 * (len(df_TYP) + 1)
+    df_TYP = process_and_display(df_TYP)
     st .dataframe(df_TYP, width='stretch', hide_index=True,
                         column_config={
                                         "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
@@ -457,6 +466,7 @@ def df_data_type(df,selected_name,selected_date,daily=False):
     df_IMG = df_IMG.sort_values(by='จำนวน', ascending=False)
     df_IMG = df_IMG[df_IMG['QUA_PIC']!="                                                                                                                                                                                                      "]
     dynamic_height = 35 * (len(df_IMG) + 1)
+    df_IMG = process_and_display(df_IMG)
     st.dataframe(df_IMG, width='stretch', hide_index=True,
                         column_config={
                                         "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
@@ -468,6 +478,7 @@ def df_data_type(df,selected_name,selected_date,daily=False):
     df_BUILD = df_BUILD.sort_values(by='จำนวน', ascending=False)
     df_BUILD = df_BUILD[df_BUILD['BUILD_FROM']!="                                                                                                                                                                                                      "]
     dynamic_height = 35 * (len(df_BUILD) + 1)
+    df_BUILD = process_and_display(df_BUILD)
     st.dataframe(df_BUILD, width='stretch', hide_index=True,
                          column_config={
                                         "จำนวน": st.column_config.NumberColumn("จำนวน", format="%,d ", alignment="center"),
