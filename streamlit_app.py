@@ -236,7 +236,7 @@ def display_styled_dataframe_v2(df_display, title):
             'color: #000000;'           # ตัวอักษรสีดำ
             'font-weight: bold;'        # ตัวหนา
             'border-radius: 4px;'       # มนขอบเล็กน้อย
-        )
+            )
     
     # 2. นำสไตล์ไปใช้กับคอลัมน์ที่ต้องการ (เช่น NAME หรือ +/- เป้าหมาย)
     df_display = df_display.style.applymap(
@@ -246,7 +246,6 @@ def display_styled_dataframe_v2(df_display, title):
     st.dataframe(
         df_display,
         column_config={
-            "bar_color": None,
             "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100, color="green"),
             "ผลงาน (TOR)": st.column_config.NumberColumn("ผลงาน (TOR)", format="%,.1f", alignment="center"),
             "เป้าสะสม (TOR)": st.column_config.NumberColumn("เป้าหมาย (TOR)", format="%,d", alignment="center"),
