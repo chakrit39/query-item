@@ -229,18 +229,6 @@ def display_styled_dataframe_v2(df_display, title):
     st.subheader(title)
     dynamic_height = 35 * (len(df_display) + 1)
 
-    def get_color(val):
-            try:
-                if val >= 100:
-                    return "green" # ForestGreen (เขียว)
-                elif val < 100:
-                    return "#red" # Streamlit Red (แดง)
-                return "red"     # Gray (ถ้าไม่ใช่ตัวเลขหรือค่าว่าง)
-            except:
-                return "red"
-    df_display = df_display.reset_index(drop=True)            
-    df_display["bar_color"] = df_display["ความคืบหน้า (%)"].apply(get_color)
-    
     st.dataframe(
         df_display,
         column_config={
@@ -255,7 +243,7 @@ def display_styled_dataframe_v2(df_display, title):
             
         },
         width='stretch',
-        hide_index=True,
+        #hide_index=True,
         height=dynamic_height
     )
     
