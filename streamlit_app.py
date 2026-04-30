@@ -238,10 +238,10 @@ def display_styled_dataframe_v2(df_display, title):
                 'border-radius: 4px;'       # มนขอบเล็กน้อย
             )
     
-        # 2. นำสไตล์ไปใช้กับคอลัมน์ที่ต้องการ (เช่น NAME หรือ +/- เป้าหมาย)
-        df_display = df_display.style.applymap(
-            highlight_text, 
-            subset=["NAME"] # เปลี่ยนเป็นชื่อคอลัมน์ที่คุณต้องการไฮไลท์
+    # 2. นำสไตล์ไปใช้กับคอลัมน์ที่ต้องการ (เช่น NAME หรือ +/- เป้าหมาย)
+    df_display = df_display.style.applymap(
+        highlight_text, 
+        subset=["NAME"] # เปลี่ยนเป็นชื่อคอลัมน์ที่คุณต้องการไฮไลท์
         )
     st.dataframe(
         df_display,
