@@ -46,7 +46,7 @@ def get_full_data():
     credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
     client = bigquery.Client(credentials=credentials, project="dol-workspace")
     #, TIME_SUBMIT
-    query = "SELECT NAME, QUA_PIC, SURV_DATA, SURV_TYP, BUILD_FROM, DATE_SUBMIT, sheet_name FROM `dol-workspace.Dashboard_Work69.v_master_report`"
+    query = "SELECT * FROM `dol-workspace.Dashboard_Work69.v_master_report`"
     df = client.query(query).to_dataframe()
     df['NAME'] = df['NAME'].fillna("ไม่ระบุชื่อ").astype(str) # เติมชื่อแทนค่าว่าง
     df = df[df['NAME']!="ไม่ระบุชื่อ"]
@@ -55,22 +55,6 @@ def get_full_data():
     now_bkk = datetime.now(tz)
     return df ,now_bkk.strftime("%d/%m/%Y %H:%M:%S")
     
-@st.cache_data(ttl=900)
-def get_full_data_time():
-    # ดึงข้อมูลจาก Secrets (Streamlit Cloud)
-    info = st.secrets["gcp_service_account"]
-    SCOPES = [
-        "https://www.googleapis.com/auth/drive",
-        "https://www.googleapis.com/auth/bigquery",
-        "https://www.googleapis.com/auth/cloud-platform"
-    ]
-    credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
-    client = bigquery.Client(credentials=credentials, project="dol-workspace")
-    query = "SELECT NAME, TIME_SUBMIT  FROM `dol-workspace.Dashboard_Work69.v_master_timestamp_report`"
-    df = client.query(query).to_dataframe()
-    df['NAME'] = df['NAME'].fillna("ไม่ระบุชื่อ").astype(str) # เติมชื่อแทนค่าว่าง
-    df = df[df['NAME']!="ไม่ระบุชื่อ"]
-    return df
 
 def calculate_tor_target(name, date_to_check, df_tor):
     person_row = df_tor[df_tor['NAME'] == name]
@@ -731,8 +715,8 @@ with right_col:
         
 st.divider()   
 if st.checkbox("แสดงข้อมูลราย ชม."):
-    df_timestamp = get_full_data_time()
-    display_hourly_trend_chart(df_timestamp, selected_date, selected_name)
+    #df_timestamp = get_full_data_time()
+    display_hourly_trend_chart(df, selected_date, selected_name)
 
 st.divider() 
 if st.checkbox("แสดงแนวโน้มผลงานสะสม"):
