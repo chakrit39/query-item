@@ -239,7 +239,7 @@ def display_styled_dataframe_v2(df_display, title):
             )
     
     # 2. นำสไตล์ไปใช้กับคอลัมน์ที่ต้องการ (เช่น NAME หรือ +/- เป้าหมาย)
-    df_display = df_display.style.applymap(
+    df_display = df_display.style.map(
         highlight_text, 
         subset=["NAME"] # เปลี่ยนเป็นชื่อคอลัมน์ที่คุณต้องการไฮไลท์
         )
