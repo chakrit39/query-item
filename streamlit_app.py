@@ -224,6 +224,10 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
         summary = pd.concat([summary, pd.DataFrame([total_row])], ignore_index=True)
         summary.index = summary.index + 1
     return summary
+    
+def display_styled_dataframe_v2(df_display, title):
+    st.subheader(title)
+    dynamic_height = 35 * (len(df_display) + 1)
 
     def get_color(val):
         if val >= 100:
