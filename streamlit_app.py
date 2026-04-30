@@ -228,9 +228,11 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
 def display_styled_dataframe_v2(df_display, title):
     st.subheader(title)
     dynamic_height = 35 * (len(df_display) + 1)
-    if set(["Name", "เป้าสะสม (TOR)","ผลงาน (TOR)"]).issubset(df_display.columns):
+    
+    target_cols = ["NAME", "เป้าสะสม (TOR)", "ผลงาน (TOR)"]
+    if all(col in df_display.columns for col in target_cols):
         df_display = df_display.style.set_properties(
-            subset=["Name", "เป้าสะสม (TOR)","ผลงาน (TOR)"], # เปลี่ยนเป็นชื่อคอลัมน์ที่ต้องการ
+            subset=target_cols, # เปลี่ยนเป็นชื่อคอลัมน์ที่ต้องการ
             **{
                 'background-color': '#262730', 
                 }
