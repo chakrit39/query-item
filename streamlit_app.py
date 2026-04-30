@@ -228,16 +228,6 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
 def display_styled_dataframe_v2(df_display, title):
     st.subheader(title)
     dynamic_height = 35 * (len(df_display) + 1)
-    df_display = df_display.style.set_properties(
-            subset=["NAME"], 
-            **{'background-color': '#e1f5fe'} # สีฟ้าอ่อนกลุ่มที่ 1
-        ).set_properties(
-            subset=["มอบหมาย", "ดำเนินการแล้ว"], 
-            **{'background-color': '#f3e5f5'} # สีม่วงอ่อนกลุ่มที่ 2
-        ).set_properties(
-            subset=["เป้าสะสม (TOR)", "ผลงาน (TOR)"], 
-            **{'background-color': '#e8f5e9'} # สีเขียวอ่อนกลุ่มที่ 3
-        )
 
     st.dataframe(
         df_display,
