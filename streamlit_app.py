@@ -244,6 +244,12 @@ def display_styled_dataframe_v2(df_display, title):
         #highlight_text, 
         #subset=["NAME"] # เปลี่ยนเป็นชื่อคอลัมน์ที่คุณต้องการไฮไลท์
         #)
+    df_display = df_display.style.set_properties(
+        subset=["มอบหมาย", "ดำเนินการแล้ว","+/- เป้าหมาย"], # เปลี่ยนเป็นชื่อคอลัมน์ที่ต้องการ
+        **{
+            'background-color': '#262730', 
+            }
+        )
     st.dataframe(
         df_display,
         column_config={
