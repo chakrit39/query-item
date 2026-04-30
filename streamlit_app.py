@@ -232,12 +232,12 @@ def display_styled_dataframe_v2(df_display, title):
     def get_color(val):
             try:
                 if val >= 100:
-                    return "#228B22" # ForestGreen (เขียว)
+                    return "green" # ForestGreen (เขียว)
                 elif val < 100:
-                    return "#FF4B4B" # Streamlit Red (แดง)
-                return "#808080"     # Gray (ถ้าไม่ใช่ตัวเลขหรือค่าว่าง)
+                    return "#red" # Streamlit Red (แดง)
+                return "red"     # Gray (ถ้าไม่ใช่ตัวเลขหรือค่าว่าง)
             except:
-                return "#808080"
+                return "red"
     df_display = df_display.reset_index(drop=True)            
     df_display["bar_color"] = df_display["ความคืบหน้า (%)"].apply(get_color)
     
