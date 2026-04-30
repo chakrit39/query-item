@@ -225,20 +225,24 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
         summary.index = summary.index + 1
     return summary
 
-def display_styled_dataframe_v2(df_display, title):
-    st.subheader(title)
-    dynamic_height = 35 * (len(df_display) + 1)
-
+    def get_color(val):
+        if val >= 100:
+            return "green" # หรือรหัสสีเช่น "#00ff00"
+        else:
+            return "red"
+    df["bar_color"] = df["ความคืบหน้า (%)"].apply(get_color)
+    
     st.dataframe(
         df_display,
         column_config={
-            "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100, color="green"),
+            "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100, color="bar_color"),
             "ผลงาน (TOR)": st.column_config.NumberColumn("ผลงาน (TOR)", format="%,.1f", alignment="center"),
             "เป้าสะสม (TOR)": st.column_config.NumberColumn("เป้าหมาย (TOR)", format="%,d", alignment="center"),
             "+/- เป้าหมาย": st.column_config.TextColumn("สถานะ/ส่วนต่าง", alignment="center"),
             #"+/- เป้าหมาย": st.column_config.NumberColumn("+/- เป้าหมาย", format="%,.1f", alignment="center"),
             "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%,d", alignment="center"),
             "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%,d", alignment="center"),
+            "bar_color": None
         },
         width='stretch',
         #hide_index=True,
