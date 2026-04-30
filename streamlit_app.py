@@ -232,8 +232,8 @@ def display_styled_dataframe_v2(df_display, title):
         # ตั้งค่าสีพื้นหลัง (Background) และสีตัวอักษร (Color)
         # padding และ border-radius จะช่วยให้ดูเหมือนป้ายปากกาไฮไลท์มากขึ้น
         return (
-            'background-color: #FFFF00;' # สีเหลืองไฮไลท์
-            'color: #000000;'           # ตัวอักษรสีดำ
+            #'background-color: #FFFF00;' # สีเหลืองไฮไลท์
+            #'color: #000000;'           # ตัวอักษรสีดำ
             'font-weight: bold;'        # ตัวหนา
             'border-radius: 4px;'       # มนขอบเล็กน้อย
             )
