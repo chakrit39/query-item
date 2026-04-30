@@ -244,6 +244,7 @@ def display_styled_dataframe_v2(df_display, title):
     st.dataframe(
         df_display,
         column_config={
+            "bar_color": None,
             "ความคืบหน้า (%)": st.column_config.ProgressColumn("ความคืบหน้า (%)", format="%.2f%%", min_value=0, max_value=100, color="bar_color"),
             "ผลงาน (TOR)": st.column_config.NumberColumn("ผลงาน (TOR)", format="%,.1f", alignment="center"),
             "เป้าสะสม (TOR)": st.column_config.NumberColumn("เป้าหมาย (TOR)", format="%,d", alignment="center"),
@@ -251,10 +252,10 @@ def display_styled_dataframe_v2(df_display, title):
             #"+/- เป้าหมาย": st.column_config.NumberColumn("+/- เป้าหมาย", format="%,.1f", alignment="center"),
             "มอบหมาย": st.column_config.NumberColumn("มอบหมาย", format="%,d", alignment="center"),
             "ดำเนินการแล้ว": st.column_config.NumberColumn("ดำเนินการแล้ว", format="%,d", alignment="center"),
-            "bar_color": None
+            
         },
         width='stretch',
-        #hide_index=True,
+        hide_index=True,
         height=dynamic_height
     )
     
