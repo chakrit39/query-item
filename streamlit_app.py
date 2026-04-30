@@ -228,12 +228,12 @@ def summary_with_metrics_v2(input_df, group_col, df_tor, target_date, show_total
 def display_styled_dataframe_v2(df_display, title):
     st.subheader(title)
     dynamic_height = 35 * (len(df_display) + 1)
-    df_display.style\
-        .set_properties(subset=["NAME"], **{'border-right': '3px solid black', 'border-left': '3px solid black'})\
-        .set_properties(subset=["มอบหมาย"], **{'border-left': '3px solid black'})\
-        .set_properties(subset=["ดำเนินการแล้ว"], **{'border-right': '3px solid black'})\
-        .set_properties(subset=["เป้าสะสม (TOR)"], **{'border-left': '3px solid black'})\
-        .set_properties(subset=["ผลงาน (TOR)"], **{'border-right': '3px solid black'})
+    df_display = df_display.style\
+                                    .set_properties(subset=["NAME"], **{'border-right': '3px solid black', 'border-left': '3px solid black'})\
+                                    .set_properties(subset=["มอบหมาย"], **{'border-left': '3px solid black'})\
+                                    .set_properties(subset=["ดำเนินการแล้ว"], **{'border-right': '3px solid black'})\
+                                    .set_properties(subset=["เป้าสะสม (TOR)"], **{'border-left': '3px solid black'})\
+                                    .set_properties(subset=["ผลงาน (TOR)"], **{'border-right': '3px solid black'})
 
     st.dataframe(
         df_display,
