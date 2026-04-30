@@ -239,9 +239,9 @@ def display_styled_dataframe_v2(df_display, title):
             )
     elif "sheet_name" in df_display.columns:
         df_display = df_display.style.set_properties(
-            subset=["sheet_name", "ความคืบหน้า (%)"], # เปลี่ยนเป็นชื่อคอลัมน์ที่ต้องการ
+            subset=["sheet_name"], # เปลี่ยนเป็นชื่อคอลัมน์ที่ต้องการ
             **{
-                'background-color': '#1B2024', 
+                'background-color': '#262730', #'#1B2024'
                 }
             )
         
