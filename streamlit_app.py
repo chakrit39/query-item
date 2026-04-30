@@ -238,7 +238,7 @@ def display_styled_dataframe_v2(df_display, title):
                 return "#808080"     # Gray (ถ้าไม่ใช่ตัวเลขหรือค่าว่าง)
             except:
                 return "#808080"
-    df_display ช df_display.reset_index(drop=True)            
+    df_display = df_display.reset_index(drop=True)            
     df_display["bar_color"] = df_display["ความคืบหน้า (%)"].apply(get_color)
     
     st.dataframe(
